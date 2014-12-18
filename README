@@ -1,0 +1,18 @@
+Hledání párování v obecných grafech Edmondsovým algoritmem
+
+Vstupní data jsou uložena v souboru.
+Ve vstupním souboru je na prvním řádku počet hran a počet vrcholů v grafu pro kontrolu, na dalších řádcích dvojice čísel označujících jednotlivé vrcholy v grafu, které určují jednotlivé hrany. 
+Jsou zakázány smyčky (hrany spojující vrchol se sebou samým) a násobné hrany. 
+Vstupní soubor je testován, zda existuje a lze jej číst a následně, zda je validní – správně naformátovaný a neobsahuje zakázané hrany. Po načtení dat jsou uživateli načtená data vypsána pro odychcení chyb v zadání.
+
+Výstupem je seznam dvojic vrcholů, reprezentujících hrany obsažené v párování. Implicitně jde výstup na standatdní výstup, ale je možnost jej přesměrovat do souboru. 
+Pro kontrolu, výstup vždy obsahuje počet hran z nalezeného párování.
+
+Program se skládá ze tří komponent – ovladač, souborové I/O a knihovna, definující datové struktury pro reprezentaci grafu a párování a obsahující proceduru provádějící algoritmus. 
+Tato bere na vstupu graf a vrací množinu hran reprezentující maximální párování. Knihovnu bude možné použít “autonomně” např. pro účely testování. 
+Souborové I/O načítá vstup do struktur a naopak vypisuje ze struktur výpis. Ovladač má nastarosti spouštění jednotlivých komponent a předávání dat mezi nimi.
+
+Program se ovládá z příkazové řádky. Povinný parametr je vstupní soubor. Volitelně je možné přidat přepínač pro přesměrování výstupu do souboru s jeho jménem. 
+Volitelný parametr bude umožňovat zobrazení debugovacích informací.
+
+Program je možné testovat buď napsáním testovacího programu nad knihovnou nebo poskytováním vhodných testovacích dat a kontrolováním výstupu.
