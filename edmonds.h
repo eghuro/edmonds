@@ -1,9 +1,3 @@
-/*
- * edmonds.h
- *
- *  Created on: 25 Dec 2014
- *      Author: alex
- */
 #ifndef EDMONDS_H_
 #define EDMONDS_H_
 #include <utility>
@@ -13,14 +7,20 @@
 #include <memory>
 #include <map>
 #include <set>
+#include<algorithm>
 
 namespace nsp{
 typedef std::pair<int,int> edge_t;
 
 class Neighbours{
 public:
-	static const Neighbours nil;
-	Neighbours(std::vector<int>::iterator beg,std::vector<int>::iterator end):a(beg),b(end)
+	Neighbours():nil(true){
+		std::vector<int> x;
+		a=x.begin();
+		b=x.end();
+
+	}
+	Neighbours(std::vector<int>::iterator beg,std::vector<int>::iterator end):a(beg),b(end),nil(false)
 	{
 	}
 
@@ -32,6 +32,8 @@ public:
 	{
 		return b;
 	}
+
+	bool nil;
 private:
 	std::vector<int>::iterator a,b;
 };
@@ -48,30 +50,72 @@ public:
 	Graph(int _vertices=V_COUNT_DEF,int _edges=E_COUNT_DEF):
 		vertices(_vertices),
 		edges(_edges), 
-		e_used_(0),		
-		neighbours_(_edges/2+1),
-		neighbour_meta_(_vertices)		
+		e_used_(0),
+		neighbours_(_vertices,std::vector<int>(_edges,-1))
 	{
 	}
 
-	char setEdge(int x,int y){
-		/*
-			seznam sousedu
-			neighbours_[] obsahuje sousedy vrcholu "za sebou"
-			neighbour_meta_[] obsahuje dvojice "zacatek", "pocet sousedu"
-		*/
+	char unsetEdge(int x,int y){
 		if(e_used_<edges){
 			if((x>=0)&&(x<=vertices)&&(y>=0)&&(y<=vertices))
 			{
-				int x_start = neighbour_meta_[x].first;
-				int x_neighbours = neighbour_meta_[x].second;
-				neighbours_[x_start+x_neighbours]=y;
-				neighbour_meta_[x].second++;
+				for(int i=0;i<edges;++i)
+				{
+					if(neighbours_[x][i]!=y)
+					{
+						neighbours_[x][i]=-1;
+					}
+				}
 
-				int y_start = neighbour_meta_[y].first;
-				int y_neighbours = neighbour_meta_[y].second;
-				neighbours_[y_start+y_neighbours]=x;
-				neighbour_meta_[y].second++;
+				for(int i=0;i<edges;++i)
+				{
+					if(neighbours_[y][i]!=y)
+					{
+						neighbours_[y][i]=-1;
+						break;
+					}
+				}
+
+				e_used_--;
+
+				return OK;
+			}
+			else
+			{
+				return BOUND;
+			}
+		}
+		else
+		{
+			return COUNT;
+		}
+	}
+
+	char setEdge(int x,int y){
+		if(e_used_<edges){
+			if((x>=0)&&(x<=vertices)&&(y>=0)&&(y<=vertices))
+			{
+				for(int i=0;i<edges;++i)
+				{
+					if(neighbours_[x][i]==y)
+					{
+						break;
+					}
+					else if(neighbours_[x][i]!=-1)
+					{
+						neighbours_[x][i]=y;
+						break;
+					}
+				}
+
+				for(int i=0;i<edges;++i)
+				{
+					if(neighbours_[y][i]!=-1)
+					{
+						neighbours_[y][i]=x;
+						break;
+					}
+				}
 
 				e_used_++;
 
@@ -91,21 +135,32 @@ public:
 
 	Neighbours getNeigbours(int v)
 	{
+		//pokud nenastane, ze odebereme hranu a nevratime
 		if((v>=0)&&(v<=vertices)){
-			std::vector<int>::iterator beg = neighbours_.begin()+neighbour_meta_[v].first;
-			std::vector<int>::iterator end = beg+neighbour_meta_[v].second;
+			std::vector<int>::iterator beg = neighbours_[v].begin();
+			int count=0;
+			for(int i=0;i<edges;++i){
+				if(neighbours_[v][i]==-1)
+					break;
+				else
+					count++;
+			}
+			std::vector<int>::iterator end = beg+count;
 			return Neighbours(beg,end);
 		}
-		else return Neighbours::nil;
+		else return Neighbours();
 	}
 
 	bool neighbours(int x, int y){
 		if((x>=0)&&(x<=vertices)&&(y>=0)&&(y<=vertices)){
-			int x_start=neighbour_meta_[x].first;
-			int x_neighbours = neighbour_meta_[x].second;
-			for(int i=0;i<x_neighbours;++i){
-				if(neighbours_[x_start+i]==y){
+			for(int i=0;i<edges;++i){
+				if(neighbours_[x][i]==y)
+				{
 					return true;
+				}
+				else if(neighbours_[x][i]==-1)
+				{
+					return false;
 				}
 			}
 			return false;
@@ -121,8 +176,7 @@ private:
 	
 	int e_used_;
 		
-	std::vector<int> neighbours_;
-	std::vector<std::pair<int,int>> neighbour_meta_;
+	std::vector<std::vector<int>> neighbours_;
 };
 
 class WRecord {
@@ -139,24 +193,23 @@ public:
 
 class MappingFinder{
 public:
-	MappingFinder(Graph g,Graph m):
-		mapping_(m),
-		graph_(g)
-	{
-	}
 
-	bool step(){
-		switch(find())
+	static bool step(Graph & g,Graph & m){
+		std::deque<int> set;
+		les_t l;
+		auto x=find(g,m,set,l);
+		Graph _m;
+
+		switch(x)
 		{
 		case AP:
-			//zlepsi M
+			//zlepsi M - otocit hrany v /vne parovani - 
+			augment(m,set);
 			return true;
 			break;
 		case BLOSSOM:
 			//zkontrahuj kvet
-			//step
-			//pokud jde zlepsit, zlepsi
-			//jinak j m nejlepsi
+			return blossom(g,m,set,l);
 			break;
 		case NONE:
 			//m je nejvetsi
@@ -172,23 +225,37 @@ private:
 	static const char BLOSSOM=0x11;
 	static const char NONE=0x12;
 
-	Graph mapping_,graph_;
-	int v_count_,e_count_;
-	std::map<int,WRecord> l;
-	std::deque<int> f;
+	typedef std::map<int,WRecord> les_t;
+	typedef std::deque<int> set_t;
+	
+	static bool blossom(Graph & graph_,Graph & mapping_,const set_t & set,const les_t l){
+		//zkontrahuj kvet
+		Graph g_k=graph_;
+		Graph m_k=mapping_;
+		shrink(g_k,m_k,set);
+		//zavolej se na G.K, M.K
+		if(step(g_k,m_k))
+		{//pokud M.K lze zlepsit - zlepsi M, konec
+			expand(g_k,m_k,graph_,mapping_,set);
+		}
+		//pokud M.K nejde zlepsit - M je nejlepsi
+		return true;
+	}
 
-	char find(){
+	static char find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l){
+		typedef std::pair<int,WRecord> pair_t;
+		set_t f;
 		//najdi volne vrcholy a vloz do f a do l na hladinu 0
 		//volny vrchol - neni v zadne parovaci hrane
 		for(int i=0;i<graph_.vertices;i++){
 			if(mapping_.getNeigbours(i).begin()==mapping_.getNeigbours(i).end()){
 				//v parovani nema sousedy - izolovany vrchol - volny vrchol
 				f.push_back(i);
-				l.insert(std::pair<int,WRecord>(i,WRecord(i,0)));
+				l.insert(pair_t(i,WRecord(i,0)));
 			}
 		}
 		//hlavni cyklus - dokud fronta neni prazdna
-		for(std::deque<int>::iterator i=f.begin();i<f.end();++i)
+		for(set_t::iterator i=f.begin();i<f.end();++i)
 		{
 			int v=*i;
 
@@ -204,14 +271,14 @@ private:
 					{//y in l
 						//y nutne na hladine h
 						//najdu VSC nebo Kytku -> konec
-						return finder(v,y);
+						return finder(v,y,set,l);
 					}
 					else
 					{//y not in L
 						f.push_back(y);
 						edge_t e=(*x).second.e;
 						WRecord wr=WRecord(y,h+1,e);
-						l.insert(std::pair<int,WRecord>(y,wr));
+						l.insert(pair_t(y,wr));
 					}
 				}
 				else{
@@ -224,26 +291,27 @@ private:
 							y.insert(*x);
 						}
 					}
-					std::map<int,WRecord> pom;
+
+					les_t pom;
 					for(std::set<int>::iterator x=y.begin();x!=y.end();x++){
 						//existuje vrchol v y, ktery patri do l a je na sude hladine?
-						std::map<int,WRecord>::iterator z=l.find(*x);
+						les_t::iterator z=l.find(*x);
 						if(z!=l.end())
 						{
 							if((*z).second.h%2==0){
 								//najdu VSC nebo kytku -> konec
-								return finder((*z).second.v,v);
+								return finder((*z).second.v,v,set,l);
 							}
 						}else{
 							//x nepatri do l
-							pom.insert(std::pair<int,WRecord>(*x,(*z).second));
+							pom.insert(pair_t(*x,(*z).second));
 						}
 					}
 					//pro kazdy vrchol y nepatrici do L : zarad y do fronty
-					for(std::map<int,WRecord>::iterator y=pom.begin();y!=pom.end();y++){
+					for(les_t::iterator y=pom.begin();y!=pom.end();y++){
 						f.push_back((*y).second.v);
 						WRecord vy=WRecord((*y).second.v,(*y).second.h+1,edge_t(v,(*y).second.v));
-						l.insert(std::pair<int,WRecord>((*y).second.v,vy));
+						l.insert(pair_t((*y).second.v,vy));
 					}
 				}
 			}
@@ -255,38 +323,80 @@ private:
 		return NONE;
 	}
 
-	int lookup_root(int vertex)
+	static int lookup_root(int vertex, set_t & set, const les_t & l)
 	{
 		//hledam koren ve strome (l)
 		int v=vertex;
-		auto x=l.find(v);
-		for(;;){
-			if(x!=l.end()){
-				if((*x).second.h==0){
-					return (*x).second.v;
+		for(auto x=l.find(v);x!=l.end();){
+			set.push_back((*x).first);
+
+			if((*x).second.h==0){
+				return (*x).second.v;
+			}
+			else{
+				if((*x).second.e.first==v){
+					v=(*x).second.e.second;
 				}
 				else{
-					if((*x).second.e.first==v){
-						v=(*x).second.e.second;
-					}
-					else{
-						v=(*x).second.e.first;
-					}
+					v=(*x).second.e.first;
 				}
 			}
 		}
+		return -1;
 	}
 
-	char finder(int v,int y){
+	static char finder(int v,int y, set_t & set, const les_t & l){
 		//najdu VSC nebo Kytku -> konec
+		int k1,k2;
 		//hledej z v cestu do korene k1
-		int k1=lookup_root(v);
+		if(k1=lookup_root(v,set,l)==-1)
+			throw "Error";
 		//hledej v y cestu do korene k2
-		int k2=lookup_root(y);
+		if(k2=lookup_root(y,set,l)==-1)
+			throw "Error";
 		//k1=k2 -> kytka, k1!=k2 -> VSC
-		if(k1==k2) return BLOSSOM;
-		else return AP;
+		if(k1==k2)
+		{
+			return BLOSSOM;
+		}
+		else
+		{
+			return AP;
+		}
 	}
+
+	static void augment(Graph & mapping_,set_t & set){
+		//zlepsi M - otocit hrany v /vne parovani
+		//jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
+		if(!set.empty()){
+			int a=set.front();
+			set.pop_front();
+			while(!set.empty()){
+				int b=set.front();
+				set.pop_front();
+
+				if(mapping_.neighbours(a,b)){
+					mapping_.unsetEdge(a,b);
+				}
+				else
+				{
+					mapping_.setEdge(a,b);
+				}
+
+				a=b;
+			}
+		}
+
+	}
+
+	//TODO
+	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set);
+		//kontrakce kvetu (set)
+		//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
+		//zaroven v parovani totez
+
+	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set);
+		//pokud M.K lze zlepsit - zlepsi M, konec
 };
 };//nsp
 
