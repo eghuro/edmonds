@@ -219,8 +219,9 @@ public:
 		}
 	}
 	
-	
+#ifndef DEBUG
 private:
+#endif
 	static const char AP=0x10;
 	static const char BLOSSOM=0x11;
 	static const char NONE=0x12;
@@ -391,41 +392,44 @@ private:
 	}
 
 	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set)
-			//kontrakce kvetu (set)
-			//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
-			//zaroven v parovani totez
+	//kontrakce kvetu (set)
+	//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
+	//TODO: zaroven v parovani totez
+	{
+		int v = set.front();
+		//zjistit, zda ex. hrana (v,v) v grafu
+		bool b=graph_.neighbours(v,v);
+		//vrcholy kvetu
+		for(set_t::const_iterator it=(++set.begin());it<set.end();++it)
 		{
-			int v = set.front();
-			//zjistit, zda ex. hrana (v,v)
-			//vrcholy kvetu
-			for(set_t::const_iterator it=(++set.begin());it<set.end();++it)
+			int x=(*it);//vrchol
+			graph_.unsetEdge(v,x);
+			//sousede
+			for(std::vector<int>::iterator yt=graph_.getNeigbours(x).begin();yt<graph_.getNeigbours(v).end();++yt)
 			{
-				int x=(*it);//vrchol
-				graph_.unsetEdge(v,x);
-				//sousede
-				for(std::vector<int>::iterator yt=graph_.getNeigbours(x).begin();yt<graph_.getNeigbours(v).end();++yt)
-				{
-					int y=(*yt);//soused x
-					/*
-					 * i pokud y je v set: prepoji se y na v a zrusi se hrana (x,y)
-					 * tim se zajisti, ze vzdy existuje hrana (x,v)
-					 */
-					//(v,y) neni v graph_ a mapping_
-					//napojeni souseda na v
-					graph_.unsetEdge(x,y);
-					graph_.setEdge(v,y);
-				}
-
-				//TODO: vrcholy uvedene v set odebrat z grafu - resp. co s izolovanymi vrcholy?
-				//graph_.remove(x);
+				int y=(*yt);//soused x
+				/*
+				 * i pokud y je v set: prepoji se y na v a zrusi se hrana (x,y)
+				 * tim se zajisti, ze vzdy existuje hrana (x,v)
+				 */
+				//(v,y) neni v graph_ a mapping_
+				//napojeni souseda na v
+				graph_.unsetEdge(x,y);
+				graph_.setEdge(v,y);
 			}
-			//pokud existovala hrana (v,v) nastavit
 
+			//TODO: vrcholy uvedene v set odebrat z grafu - resp. co s izolovanymi vrcholy?
+			//graph_.remove(x);
 		}
+		//pokud existovala hrana (v,v) nastavit
+		if(b){
+			graph_.setEdge(v,v);
+		}
+	}
 
-		static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
-			//TODO: pokud M.K lze zlepsit - zlepsi M, konec
-		{}
+	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
+		//TODO: pokud M.K lze zlepsit - zlepsi M, konec
+	{}
 };//MappingFinder
 };//nsp
 
