@@ -47,11 +47,11 @@ public:
 
 	int vertices,edges;
 
-	Graph(int _vertices=V_COUNT_DEF,int _edges=E_COUNT_DEF):
-		vertices(_vertices),
-		edges(_edges), 
+	Graph(int vertices_l=V_COUNT_DEF,int edges_l=E_COUNT_DEF):
+		vertices(vertices_l),
+		edges(edges_l),
 		e_used_(0),
-		neighbours_(_vertices,std::vector<int>(_edges,-1))
+		neighbours_(vertices_l,std::vector<int>(edges_l,-1))
 	{
 	}
 
@@ -184,10 +184,10 @@ public:
 	int v,h;
 	edge_t e;
 
-	WRecord(int _v,int _h,edge_t _e):v(_v),h(_h),e(_e)
+	WRecord(int v_l,int h_l,edge_t e_l):v(v_l),h(h_l),e(e_l)
 	{}
 
-	WRecord(int _v,int _h):v(_v),h(_h)
+	WRecord(int v_l,int h_l):v(v_l),h(h_l)
 	{}
 } ;
 
@@ -394,16 +394,17 @@ private:
 	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set)
 	//kontrakce kvetu (set)
 	//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
-	//TODO: zaroven v parovani totez
+	//zaroven v parovani totez
 	{
 		int v = set.front();
-		//zjistit, zda ex. hrana (v,v) v grafu
+		//zjistit, zda ex. hrana (v,v) v grafu (v parovani nebyla)
 		bool b=graph_.neighbours(v,v);
 		//vrcholy kvetu
 		for(set_t::const_iterator it=(++set.begin());it<set.end();++it)
 		{
 			int x=(*it);//vrchol
 			graph_.unsetEdge(v,x);
+			mapping_.unsetEdge(v,x);
 			//sousede
 			for(std::vector<int>::iterator yt=graph_.getNeigbours(x).begin();yt<graph_.getNeigbours(v).end();++yt)
 			{
@@ -416,9 +417,20 @@ private:
 				//napojeni souseda na v
 				graph_.unsetEdge(x,y);
 				graph_.setEdge(v,y);
+
+				//hrany parovani jsou podmnozinou hran grafu
+				if(mapping_.neighbours(x,y))
+				{
+					//pokud hrana byla i v parovani ...
+					mapping_.unsetEdge(x,y);
+					mapping_.setEdge(v,y);
+				}
 			}
 
-			//TODO: vrcholy uvedene v set odebrat z grafu - resp. co s izolovanymi vrcholy?
+			/*
+			 * vrcholy uvedene v set odebrat z grafu - resp. co s izolovanymi vrcholy?
+			 * v parovani nevadi, pritomnost izolovanych vrcholu, maximalitu neovlivni
+			 */
 			//graph_.remove(x);
 		}
 		//pokud existovala hrana (v,v) nastavit
