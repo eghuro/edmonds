@@ -1,21 +1,11 @@
-bins := edmonds
-objs:= edmonds.o
-
-CC=gcc
-CFLAGS=-std=g++11
+CC=g++
 
 .PHONY: all
 
 clean:
-	rm -f *.o $(bins)
+	rm -f edmonds
 
-all: $(bins)
+all: edmonds
 
-edmonds.o : edmonds.h
-
-objects: $(objs)
-$(objects):%.o:%.c
-	$(CC) $(CFLAGS) $< -o $@
-
-edmonds: $(objects)
-	$(CC) $(CFLAGS) -o edmonds $(objects)
+edmonds : edmonds.c edmonds.h
+	g++ edmonds.c edmonds.h -o edmonds

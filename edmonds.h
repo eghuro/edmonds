@@ -176,7 +176,7 @@ private:
 	
 	int e_used_;
 		
-	std::vector<std::vector<int>> neighbours_;
+	std::vector<std::vector<int> > neighbours_;
 };
 
 class WRecord {
@@ -197,7 +197,7 @@ public:
 	static bool step(Graph & g,Graph & m){
 		std::deque<int> set;
 		les_t l;
-		auto x=find(g,m,set,l);
+		char x=find(g,m,set,l);
 		Graph _m;
 
 		switch(x)
@@ -259,7 +259,7 @@ private:
 		{
 			int v=*i;
 
-			auto x=l.find(v);
+			les_t::iterator x=l.find(v);
 			if(x!=l.end()){
 				int h=(*x).second.h;//hladina v
 				Neighbours n_v=mapping_.getNeigbours(v);
@@ -327,7 +327,7 @@ private:
 	{
 		//hledam koren ve strome (l)
 		int v=vertex;
-		for(auto x=l.find(v);x!=l.end();){
+		for(les_t::const_iterator x=l.find(v);x!=l.end();){
 			set.push_back((*x).first);
 
 			if((*x).second.h==0){
@@ -347,12 +347,13 @@ private:
 
 	static char finder(int v,int y, set_t & set, const les_t & l){
 		//najdu VSC nebo Kytku -> konec
-		int k1,k2;
 		//hledej z v cestu do korene k1
-		if(k1=lookup_root(v,set,l)==-1)
+		int k1=lookup_root(v,set,l);
+		if(k1==-1)
 			throw "Error";
 		//hledej v y cestu do korene k2
-		if(k2=lookup_root(y,set,l)==-1)
+		int k2=lookup_root(y,set,l);
+		if(k2==-1)
 			throw "Error";
 		//k1=k2 -> kytka, k1!=k2 -> VSC
 		if(k1==k2)
@@ -389,15 +390,43 @@ private:
 
 	}
 
-	//TODO
-	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set);
-		//kontrakce kvetu (set)
-		//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
-		//zaroven v parovani totez
+	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set)
+			//kontrakce kvetu (set)
+			//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
+			//zaroven v parovani totez
+		{
+			int v = set.front();
+			//zjistit, zda ex. hrana (v,v)
+			//vrcholy kvetu
+			for(set_t::const_iterator it=(++set.begin());it<set.end();++it)
+			{
+				int x=(*it);//vrchol
+				graph_.unsetEdge(v,x);
+				//sousede
+				for(std::vector<int>::iterator yt=graph_.getNeigbours(x).begin();yt<graph_.getNeigbours(v).end();++yt)
+				{
+					int y=(*yt);//soused x
+					/*
+					 * i pokud y je v set: prepoji se y na v a zrusi se hrana (x,y)
+					 * tim se zajisti, ze vzdy existuje hrana (x,v)
+					 */
+					//(v,y) neni v graph_ a mapping_
+					//napojeni souseda na v
+					graph_.unsetEdge(x,y);
+					graph_.setEdge(v,y);
+				}
 
-	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set);
-		//pokud M.K lze zlepsit - zlepsi M, konec
-};
+				//TODO: vrcholy uvedene v set odebrat z grafu - resp. co s izolovanymi vrcholy?
+				//graph_.remove(x);
+			}
+			//pokud existovala hrana (v,v) nastavit
+
+		}
+
+		static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
+			//TODO: pokud M.K lze zlepsit - zlepsi M, konec
+		{}
+};//MappingFinder
 };//nsp
 
 #endif//EDMONDS_H_
