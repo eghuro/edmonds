@@ -8,4 +8,7 @@ clean:
 all: edmonds
 
 edmonds : edmonds.c edmonds.h
-	g++ edmonds.c edmonds.h -o edmonds
+	g++ -Wall edmonds.c edmonds.h -o edmonds
+
+test: test.cpp edmonds.h
+	g++ -Wall test.cpp edmonds.h -o edmonds-test

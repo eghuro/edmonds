@@ -13,9 +13,9 @@ using namespace nsp;
 int main(int argc, char** argv)
 {
 	Graph g,m;
- 	if(MappingFinder::step(g,m)){
- 		//v m je parovani
- 	}
+ 	while(MappingFinder::step(g,m));//zlepsuj parovani, dokud to jde
+ 	//v m je maximalni parovani
+
  
  	return 0;
 
