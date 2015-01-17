@@ -108,7 +108,7 @@ test0()
 	std::cout<<"Parovani:"<<std::endl;
 	m.print();*/
 	MappingFinder::les_t l;
-	MappingFinder::set_t s = MappingFinder::prepare(m,l);
+	MappingFinder::queue_t s = MappingFinder::prepare(m,l);
 	if(s.size()==6)
 	{
 		std::cout<<"Velikost OK"<<std::endl;
@@ -117,7 +117,7 @@ test0()
 	{
 		std::cout<<"Velikost KO"<<std::endl;
 	}
-	for(MappingFinder::set_t::iterator it=s.begin();it<s.end();++it)
+	for(MappingFinder::queue_t::iterator it=s.begin();it<s.end();++it)
 	{
 		std::cout<<(*it)<<" ";
 	}
@@ -136,7 +136,7 @@ test0()
 			std::cout<<"augmenting path"<<std::endl;
 			for(MappingFinder::set_t::iterator it=set.begin();it<set.end();++it)
 			{
-				std::cout<<(*it)<<" ";
+				std::cout<<"("<<(*it).first<<","<<(*it).second<<") ";
 			}
 			std::cout<<std::endl;
 			MappingFinder::augment(m,set);
