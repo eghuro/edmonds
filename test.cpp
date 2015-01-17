@@ -36,7 +36,7 @@ init()
 	}
 
 	g=Graph(1,1);
-	if((g.getVertices()==1)&&(g.getEdges()==1)&&(g.legal_edge(0,0))&&g.setEdge(0,0))
+	if((g.getVertices()==1)&&(g.legal_edge(0,0))&&g.setEdge(0,0)&&(g.getEdges()==1))
 	{
 		g.print();
 		std::cout<<"OK"<<std::endl;
@@ -46,7 +46,7 @@ init()
 		std::cout<<"Fail  init #2"<<std::endl;
 	}
 	g=Graph(3,3);
-	if((g.getVertices()==3)&&(g.getEdges()==3)&&g.setEdge(0,1)&&g.setEdge(0,2)&&g.setEdge(1,2)&&g.neighbours(0,1)&&g.neighbours(2,0)&&g.neighbours(1,2))
+	if((g.getVertices()==3)&&g.setEdge(0,1)&&g.setEdge(0,2)&&g.setEdge(1,2)&&g.neighbours(0,1)&&g.neighbours(2,0)&&g.neighbours(1,2)&&(g.getEdges()==3))
 	{
 		g.print();
 		std::cout<<"OK"<<std::endl;
@@ -167,9 +167,42 @@ test0()
 	}
 }
 
+void
+test1()
+{
+	Graph g(6,6);
+	g.setEdge(0,1);
+	g.setEdge(1,2);
+	g.setEdge(2,3);
+	g.setEdge(2,4);
+	g.setEdge(3,4);
+	g.setEdge(4,5);
+	g.print();
+
+	Graph m=MappingFinder::FindMaxMapping(g);
+
+	Graph expected(6,3);
+	expected.setEdge(0,1);
+	expected.setEdge(2,3);
+	expected.setEdge(4,5);
+	if(m==expected)
+	{
+		std::cout<<"OK"<<std::endl;
+	}
+	else
+	{
+		std::cout<<"KO"<<std::endl;
+		m.print();
+		std::cout<<"Expected"<<std::endl;
+		expected.print();
+	}
+
+}
+
 int
 main(int argc, char** argv)
 {
 	//init();
-	test0();
+	//test0();
+	test1();
 }

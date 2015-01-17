@@ -78,9 +78,9 @@ public:
 			std::cout<<"vertex "<<i<<": ";
 			for(int j=0;j<edges;++j)
 			{
-				//if(neighbours_[i][j]!=-1){
+				if(neighbours_[i][j]!=-1){
 					std::cout<<neighbours_[i][j]<<" ";
-				//}
+				}
 			}
 			std::cout<<std::endl;
 		}
@@ -88,12 +88,32 @@ public:
 
 	bool unsetEdge(int x,int y)
 	{
+	//	std::cout<<"unset edge("<<x<<","<<y<<")"<<std::endl;
 		if(legal_pair(x,y)){
 			for(int i=0;i<edges;++i)
 			{
 				if(neighbours_[x][i]==y)
 				{
 					neighbours_[x][i]=-1;
+		//			std::cout<<"@@["<<x<<"]["<<i<<"]=-1"<<std::endl;
+					break;
+				}
+			}
+			int j=0;
+			for(int i=edges-1;i>=0;)
+			{
+				if((neighbours_[x][i]!=-1)&&(j<i))
+				{
+					int pom=neighbours_[x][i];
+					neighbours_[x][i]=neighbours_[x][j];
+					//std::cout<<"["<<x<<"]["<<i<<"]="<<neighbours_[x][j]<<std::endl;
+					neighbours_[x][j]=pom;
+					//std::cout<<"["<<x<<"]["<<j<<"]="<<pom<<std::endl;
+					j++;
+				}
+				else
+				{
+					--i;
 				}
 			}
 
@@ -102,12 +122,30 @@ public:
 				if(neighbours_[y][i]==x)
 				{
 					neighbours_[y][i]=-1;
+					//std::cout<<"@@["<<y<<"]["<<i<<"]=-1"<<std::endl;
 					break;
+				}
+			}
+			j=0;
+			for(int i=edges-1;i>=0;)
+			{
+				if((neighbours_[y][i]!=-1)&&(j<i))
+				{
+					int pom=neighbours_[y][i];
+					neighbours_[y][i]=neighbours_[y][j];
+					//std::cout<<"["<<y<<"]["<<i<<"]="<<neighbours_[y][j]<<std::endl;
+					neighbours_[y][j]=pom;
+					//std::cout<<"["<<y<<"]["<<j<<"]="<<pom<<std::endl;
+					j++;
+				}
+				else
+				{
+					--i;
 				}
 			}
 
 			e_used_--;
-
+			//print();
 			return true;
 		}
 		else
@@ -202,7 +240,7 @@ public:
 	{
 		if(vertices==x.getVertices())
 		{
-			if(edges==x.getEdges())
+			if(getEdges()==x.getEdges())
 			{
 				for(int i=0;i<vertices;++i)
 				{
@@ -331,8 +369,8 @@ public:
 		}
 		std::cout<<std::endl;
 
-		std::cout<<"Parovani:"<<std::endl;
-		mapping_.print();
+		//std::cout<<"Parovani:"<<std::endl;
+		//mapping_.print();
 		return f;
 	}
 
@@ -459,7 +497,7 @@ public:
 			std::cout<<"Queue:";
 			for(queue_t::iterator it=f.begin();it!=f.end();++it)
 			{
-				std::cout<<*it<<" ";
+				std::cout<<"#"<<*it<<" ";
 			}
 			std::cout<<std::endl;
 			i=f.begin();
@@ -524,7 +562,7 @@ public:
 	//0
 	static void augment(Graph & mapping_,set_t & set){
 		std::cout<<"Augment"<<std::endl;
-		mapping_.print();
+		//mapping_.print();
 		std::cout<<"set: ";
 		for(set_t::iterator it=set.begin();it!=set.end();++it)
 		{
@@ -539,7 +577,8 @@ public:
 				int a=e.first;
 				int b=e.second;
 				set.pop_front();
-				if(mapping_.neighbours(a,b)){
+				if(mapping_.neighbours(a,b))
+				{
 					mapping_.unsetEdge(a,b);
 				}
 				else
@@ -611,36 +650,42 @@ public:
 	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
 		//TODO: pokud M.K lze zlepsit - zlepsi M, konec
 	{}
+
+	//true ... zvetsili jsme parovani
+		//0
+		static bool step(Graph & g,Graph & m)
+		{
+			std::cout<<"Step"<<std::endl;
+			set_t set;
+			les_t l;
+			Result x=find(g,m,set,l);
+
+			switch(x)
+			{
+			case AP:
+				//zlepsi M - otocit hrany v /vne parovani -
+				augment(m,set);
+				return true;
+				break;
+			case BLOSSOM:
+				//zkontrahuj kvet
+				return blossom(g,m,set,l);
+				break;
+			case NONE:
+				//m je nejvetsi
+				return false;
+				break;
+			default:throw "fatal";
+			}
+		}
 #ifndef DEBUG
 public:
 #endif
-
-	//true ... zvetsili jsme parovani
-	//0
-	static bool step(Graph & g,Graph & m)
+	static Graph FindMaxMapping(Graph & g)
 	{
-		std::cout<<"Step"<<std::endl;
-		set_t set;
-		les_t l;
-		Result x=find(g,m,set,l);
-
-		switch(x)
-		{
-		case AP:
-			//zlepsi M - otocit hrany v /vne parovani -
-			augment(m,set);
-			return true;
-			break;
-		case BLOSSOM:
-			//zkontrahuj kvet
-			return blossom(g,m,set,l);
-			break;
-		case NONE:
-			//m je nejvetsi
-			return false;
-			break;
-		default:throw "fatal";
-		}
+		Graph m(g.getVertices(),g.getEdges());
+		while(step(g,m));;
+		return m;
 	}
 
 
