@@ -12,30 +12,35 @@
 
 namespace nsp{
 typedef std::pair<int,int> edge_t;
+typedef std::vector<int>::iterator iter;
 
 class Neighbours
 {
 private:
-	std::vector<int>::iterator a,b;
+	iter a,b;
 public:
 	Neighbours():nil(true)
 	{
 		std::vector<int> x;
 		a=x.begin();
 		b=x.end();
-
 	}
-	Neighbours(std::vector<int>::iterator beg,std::vector<int>::iterator end):a(beg),b(end),nil(false)
+	Neighbours(iter beg,iter end):a(beg),b(end),nil(false)
 	{
 	}
 
-	std::vector<int>::iterator begin()
+	iter begin() const
 	{
 		return a;
 	}
-	std::vector<int>::iterator end()
+	iter end() const
 	{
 		return b;
+	}
+
+	int size() const
+	{
+		return b-a;
 	}
 
 	bool nil;
@@ -46,14 +51,15 @@ class Graph
 {
 public:
 
-	int getVertices()
+	int getVertices() const
 	{
 		return vertices;
 	}
 
-	int getEdges()
+	int getEdges() const
 	{
-		return edges;
+		//return edges;
+		return e_used_;
 	}
 
 	Graph(int vertices_l=V_COUNT_DEF,int edges_l=E_COUNT_DEF):
@@ -64,14 +70,17 @@ public:
 	{
 	}
 
-	void print()
+	void print() const
 	{
+		std::cout<<"Neighbours"<<std::endl;
 		for(int i=0;i<vertices;++i)
 		{
-			std::cout<<"vertex: "<<i<<std::endl;
+			std::cout<<"vertex "<<i<<": ";
 			for(int j=0;j<edges;++j)
 			{
-				std::cout<<neighbours_[i][j]<<" ";
+				if(neighbours_[i][j]!=-1){
+					std::cout<<neighbours_[i][j]<<" ";
+				}
 			}
 			std::cout<<std::endl;
 		}
@@ -79,7 +88,7 @@ public:
 
 	bool unsetEdge(int x,int y)
 	{
-		if(legal_edge(x,y)){
+		if(legal_pair(x,y)){
 			for(int i=0;i<edges;++i)
 			{
 				if(neighbours_[x][i]==y)
@@ -148,11 +157,11 @@ public:
 		
 	}
 
-	Neighbours getNeigbours(int v)
+	Neighbours getNeighbours(int v)
 	{
 		//pokud nenastane, ze odebereme hranu a nevratime
 		if((v>=0)&&(v<=vertices)){
-			std::vector<int>::iterator beg = neighbours_[v].begin();
+			iter beg = neighbours_[v].begin();
 			int count=0;
 			for(int i=0;i<edges;++i){
 				if(neighbours_[v][i]==-1)
@@ -160,7 +169,7 @@ public:
 				else
 					count++;
 			}
-			std::vector<int>::iterator end = beg+count;
+			iter end = beg+count;
 			return Neighbours(beg,end);
 		}
 		else return Neighbours();
@@ -168,7 +177,7 @@ public:
 
 	bool neighbours(int x, int y) const
 	{
-		if((x>=0)&&(x<=vertices)&&(y>=0)&&(y<=vertices))
+		if(legal_pair(x,y))
 		{
 			for(int i=0;i<edges;++i)
 			{
@@ -188,6 +197,46 @@ public:
 		}
 	}
 
+	//TODO potreba overit isomorfismus nebo vyhodit
+	bool operator == (Graph& x) const
+	{
+		if(vertices==x.getVertices())
+		{
+			if(edges==x.getEdges())
+			{
+				for(int i=0;i<vertices;++i)
+				{
+					for(int j=0;j<vertices;++j)
+					{
+						if(x.neighbours(i,j)!=neighbours(i,j))
+						{
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool isMapping() const
+	{
+		for(int i=0;i<vertices;++i)
+		{
+			int neighbour_c=0;
+			for(int j=0;j<edges;++j)
+			{
+				if(neighbours(i,j)){
+					if((++neighbour_c)>1)
+					{
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
 #ifndef DEBUG
 public:
 #endif
@@ -199,9 +248,14 @@ public:
 
 	std::vector<std::vector<int> > neighbours_;
 
-	bool legal_edge(int x,int y)
+	bool legal_pair(int x,int y) const
 	{
-		return (e_used_<edges)&&(x>=0)&&(x<=vertices)&&(y>=0)&&(y<=vertices);
+		return (x>=0)&&(x<=vertices)&&(y>=0)&&(y<=vertices);
+	}
+
+	bool legal_edge(int x,int y) const
+	{
+		return (e_used_<edges)&&legal_pair(x,y);
 	}
 };
 
@@ -232,13 +286,17 @@ public:
 
 	typedef std::map<int,WRecord> les_t;
 	typedef std::deque<int> set_t;
+	typedef std::pair<int,WRecord> pair_t;
 	
 	//0
-	static bool blossom(Graph & graph_,Graph & mapping_,const set_t & set,const les_t l)
+	static bool blossom(Graph & graph_,Graph & mapping_,set_t & set,const les_t l)
 	{
-		//zkontrahuj kvet
+		//kontrakce kvetu
 		Graph g_k=graph_;
 		Graph m_k=mapping_;
+		//urizni stonek
+		cut(set);
+		//zkontrahuj kvet
 		shrink(g_k,m_k,set);
 		//zavolej se na G.K, M.K
 		if(step(g_k,m_k))
@@ -250,35 +308,47 @@ public:
 		return false;
 	}
 
-	//2
-	static Result find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l)
+	static set_t prepare(Graph & mapping_, les_t & l)
 	{
-		typedef std::pair<int,WRecord> pair_t;
 		set_t f;
 		//najdi volne vrcholy a vloz do f a do l na hladinu 0
 		//volny vrchol - neni v zadne parovaci hrane
-		for(int i=0;i<graph_.getVertices();i++)
+		for(int i=0;i<mapping_.getVertices();i++)
 		{
-			if(mapping_.getNeigbours(i).begin()==mapping_.getNeigbours(i).end())
+			if(mapping_.getNeighbours(i).begin()==mapping_.getNeighbours(i).end())
 			{
 				//v parovani nema sousedy - izolovany vrchol - volny vrchol
 				f.push_back(i);
 				l.insert(pair_t(i,WRecord(i,0)));
 			}
 		}
+		return f;
+	}
+
+	//2
+	static Result find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l)
+	{
+		std::cout<<"Step"<<std::endl;
+
+		//najdi volne vrcholy a vloz do f a do l na hladinu 0
+		set_t f=prepare(mapping_,l);
+
 		//hlavni cyklus - dokud fronta neni prazdna
 		for(set_t::iterator i=f.begin();i<f.end();++i)
 		{
 			int v=*i;
+			std::cout<<"Vrchol "<<v<<std::endl;
 
 			les_t::iterator x=l.find(v);
 			if(x!=l.end())
 			{
 				int h=(*x).second.h;//hladina v
-				Neighbours n_v=mapping_.getNeigbours(v);
+				std::cout<<"Hladina "<<h<<std::endl;
+				Neighbours n_v=graph_.getNeighbours(v);
 
 				if(h%2==1)
 				{				
+					std::cout<<"Licha hladina"<<std::endl;
 					int y=*(n_v.begin());//vrchol spojeny s v parovaci hranou
 					if(l.find(y)!=l.end())
 					{//y in l
@@ -296,17 +366,22 @@ public:
 				}
 				else
 				{
+					std::cout<<"Suda hladina"<<std::endl;
 					std::set<int> y;
 					//y mnozina vrcholu dosazitelnych z v po neparovaci hrane
-					for(std::vector<int>::iterator x=n_v.begin();x<n_v.end();x++)
+					std::cout<<"Y={";
+					for(iter x=n_v.begin();x<n_v.end();x++)
 					{
+
 						//sousedi v
 						if(!mapping_.neighbours(v,(*x)))
 						{
 							//nejsou sousedi v parovani
 							y.insert(*x);
+							std::cout<<(*x)<<" ";
 						}
 					}
+					std::cout<<"}"<<std::endl;
 
 					les_t pom;
 					for(std::set<int>::iterator x=y.begin();x!=y.end();x++)
@@ -315,6 +390,7 @@ public:
 						les_t::iterator z=l.find(*x);
 						if(z!=l.end())
 						{
+							std::cout << "Vrchol "<<(*z).second.v<<", hladina "<<(*z).second.h<<std::endl;
 							if((*z).second.h%2==0)
 							{
 								//najdu VSC nebo kytku -> konec
@@ -344,10 +420,9 @@ public:
 		return NONE;
 	}
 
-	//2
+	//0
 	static int lookup_root(int vertex, set_t & set, const les_t & l)
 	{
-		//TODO prepsat ci zdokumentovat
 		//hledam koren ve strome (l)
 		int v=vertex;
 		for(les_t::const_iterator x=l.find(v);x!=l.end();){
@@ -391,7 +466,7 @@ public:
 		}
 	}
 
-	//1
+	//0
 	static void augment(Graph & mapping_,set_t & set){
 		//zlepsi M - otocit hrany v /vne parovani
 		//jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
@@ -432,7 +507,7 @@ public:
 			graph_.unsetEdge(v,x);
 			mapping_.unsetEdge(v,x);
 			//sousede
-			for(std::vector<int>::iterator yt=graph_.getNeigbours(x).begin();yt<graph_.getNeigbours(v).end();++yt)
+			for(iter yt=graph_.getNeighbours(x).begin();yt<graph_.getNeighbours(v).end();++yt)
 			{
 				int y=(*yt);//soused x
 				/*
@@ -465,6 +540,11 @@ public:
 		}
 	}
 
+	static void cut(set_t & set)
+	{
+		//predpoklad:
+	}
+
 	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
 		//TODO: pokud M.K lze zlepsit - zlepsi M, konec
 	{}
@@ -476,6 +556,7 @@ public:
 	//0
 	static bool step(Graph & g,Graph & m)
 	{
+		std::cout<<"Step"<<std::endl;
 		std::deque<int> set;
 		les_t l;
 		Result x=find(g,m,set,l);
