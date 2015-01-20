@@ -6,7 +6,7 @@
 
 using namespace nsp;
 
-int _tmain(int argc, _TCHAR* argv[])
+/*int _tmain(int argc, _TCHAR* argv[])
 {
 	Graph g,m;
 	if(MappingFinder::step(g,m)){
@@ -14,5 +14,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	return 0;
-}
+}*/
+
 

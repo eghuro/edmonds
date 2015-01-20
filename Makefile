@@ -1,14 +1,23 @@
 CC=g++
+CFLAGS=-c -Wall
+LDFLAGS=-Wall
+
+objs := graph.o finder.o test.o
+prog := test
 
 .PHONY: all
 
 clean:
-	rm -f edmonds edmonds-test
+	rm -f ${objs} ${prog}
 
-all: edmonds
+all: $(prog)
 
-edmonds : edmonds.c edmonds.h
-	$(CC) edmonds.c edmonds.h -o edmonds
+${prog}: $(objs)
+	${CC} ${LDFLAGS} -o $@ $^
 
-test: test.cpp edmonds.h
-	$(CC) test.cpp edmonds.h -o edmonds-test
+%.o:%.cpp
+	$(CC) $(CFLAGS) -o $@ $<
+
+graph.o : edmonds.h
+
+

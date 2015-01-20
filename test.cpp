@@ -181,6 +181,11 @@ test1()
 
 	Graph m=MappingFinder::FindMaxMapping(g);
 
+	if(!m.isMapping())
+	{
+		std::cout<<"KO - not a mapping"<<std::endl;
+	}
+
 	Graph expected(6,3);
 	expected.setEdge(0,1);
 	expected.setEdge(2,3);
@@ -199,10 +204,16 @@ test1()
 
 }
 
+void
+test3()
+{
+
+}
 int
 main(int argc, char** argv)
 {
-	//init();
-	//test0();
+	init();
+	test0();
 	test1();
+	test3();
 }
