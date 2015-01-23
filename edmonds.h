@@ -141,7 +141,7 @@ public:
 		//urizni stonek
 		cut(set);
 		//zkontrahuj kvet
-		//shrink(g_k,m_k,set);
+		shrink(g_k,m_k,set);
 		//zavolej se na G.K, M.K
 		//if(step(g_k,m_k))
 		//{//pokud M.K lze zlepsit - zlepsi M, konec
@@ -295,58 +295,93 @@ public:
 		//v set jsou hrany nalezene kytky i se stonkem
 		//stonek se pozna tak, ze jeho hrany jsou v mnozine dvakrat
 		//stonek je treba uriznout
-
-		std::map<int,int> stupne;
+		std::cout<<"cut"<<std::endl;
+		typedef std::map<int,std::vector<int> > str_t;
+		str_t mapa;
+		set_t remove;
 		for(set_t::iterator it=set.begin();it!=set.end();++it)
 		{
-			std::map<int,int>::iterator yt=stupne.find((*it).first);
-			if(yt!=stupne.end())
+			bool duplicit=false;
+			str_t::iterator a=mapa.find((*it).first);
+			if(a!=mapa.end())
 			{
-				(*yt).second++;
-			}
-			else{
-				stupne.insert(std::pair<int,int>((*it).first,1));
-			}
-
-			yt=stupne.find((*it).second);
-			if(yt!=stupne.end())
-			{
-				(*yt).second++;
-			}
-			else{
-				stupne.insert(std::pair<int,int>((*it).second,1));
-			}
-		}
-
-		set_t new_set;
-		std::map<int,int> v_forb;
-		//pro vrcholy "stupne" 4, krome se 3 sousedy - odebrat hrany
-		for(set_t::iterator it=set.begin();it<set.end();++it)
-		{
-			std::map<int,int>::iterator yt=stupne.find((*it).first);
-			if(yt!=stupne.end())
-			{
-				if((*yt).second!=4)
+				//rozsiruji vektor, resp. hledam duplikat
+				for(std::vector<int>::iterator jt=(*a).second.begin();jt!=(*a).second.end();++jt)
 				{
-					new_set.push_back(*it);
+					if((*jt)==(*it).second)
+					{
+						//nalezen duplikat
+						duplicit=true;
+						remove.push_back(edge_t((*it).first,(*it).second));
+						(*a).second.erase(jt);
+						break;//iterator ve foru neplatny
+					}
 				}
-				else
+				if(!duplicit)
 				{
-
+					//insert
+					(*a).second.push_back((*it).second);
 				}
 			}
+			else
+			{
+				//novy vektor
+				std::vector<int> v;
+				v.push_back((*it).second);
+				mapa.insert(std::pair<int,std::vector<int> >((*it).first,v));
+			}
+			duplicit=false;
+			str_t::iterator b=mapa.find((*it).second);
+			if(b!=mapa.end())
+			{
+				for(std::vector<int>::iterator jt=(*b).second.begin();jt!=(*b).second.end();++jt)
+				{
+					if((*jt)==(*it).first)
+					{
+						duplicit=true;
+						(*b).second.erase(jt);
+						break;
+					}
+				}
+			}
+			else
+			{
+				//novy vektor
+				std::vector<int> v;
+				v.push_back((*it).first);
+				mapa.insert(std::pair<int,std::vector<int> >((*it).second,v));
+			}
 		}
 
-		for(std::map<int,int>::iterator it=stupne.begin();it!=stupne.end();++it)
-		{
-			std::cout<<"deg("<<(*it).first<<")="<<(*it).second<<std::endl;
-		}
-
-		for(set_t::iterator it=new_set.begin();it!=new_set.end();++it)
+		for(set_t::iterator it=remove.begin();it!=remove.end();++it)
 		{
 			std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
 		}
 
+		std::cout<<"==="<<std::endl<<"Remaining"<<std::endl;
+
+		set_t set2;
+		for(set_t::iterator it=set.begin();it!=set.end();++it)
+		{
+			bool toRemove=false;
+			for(set_t::iterator jt=remove.begin();jt!=remove.end();++jt)
+			{
+				if(((*jt).first==(*it).first)&&((*jt).second==(*it).second))
+				{
+					toRemove=true;
+					break;
+				}
+			}
+			if(!toRemove)
+			{
+				set2.push_back(edge_t((*it).first,(*it).second));
+			}
+		}
+		set=set2;//copy
+		for(set_t::iterator it=set.begin();it!=set.end();++it)
+		{
+			std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
+		}
 	}
 
 	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
