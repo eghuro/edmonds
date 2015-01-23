@@ -122,19 +122,32 @@ public:
 	//0
 	static inline bool blossom(Graph & graph_,Graph & mapping_,set_t & set,const les_t l)
 	{
+		std::cout<<"Blossom"<<std::endl;
+		std::cout<<"Graf"<<std::endl;
+		graph_.print();
+
+		std::cout<<"Parovani"<<std::endl;
+		mapping_.print();
+
+		std::cout<<"Set"<<std::endl;
+		for(set_t::iterator it=set.begin();it!=set.end();++it)
+		{
+			std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
+		}
+		std::cout<<std::endl<<std::endl<<std::endl;
 		//kontrakce kvetu
 		Graph g_k=graph_;
 		Graph m_k=mapping_;
 		//urizni stonek
 		cut(set);
 		//zkontrahuj kvet
-		shrink(g_k,m_k,set);
+		//shrink(g_k,m_k,set);
 		//zavolej se na G.K, M.K
-		if(step(g_k,m_k))
-		{//pokud M.K lze zlepsit - zlepsi M, konec
-			expand(g_k,m_k,graph_,mapping_,set);
-			return true;
-		}
+		//if(step(g_k,m_k))
+		//{//pokud M.K lze zlepsit - zlepsi M, konec
+			//expand(g_k,m_k,graph_,mapping_,set);
+			//return true;
+		//}
 		//pokud M.K nejde zlepsit - M je nejlepsi
 		return false;
 	}
@@ -179,6 +192,7 @@ public:
 		//k1=k2 -> kytka, k1!=k2 -> VSC
 		if(k1==k2)
 		{
+			set.push_back(std::pair<int,int>(v,y));
 			return BLOSSOM;
 		}
 		else
@@ -228,13 +242,14 @@ public:
 	//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
 	//zaroven v parovani totez
 	{
-		/*int v = set.front();
+		std::cout<<"Shrink"<<std::endl;
+		int v = set.front().first;
 		//zjistit, zda ex. hrana (v,v) v grafu (v parovani nebyla)
 		bool b=graph_.neighbours(v,v);
 		//vrcholy kvetu
 		for(set_t::const_iterator it=(++set.begin());it<set.end();++it)
 		{
-			int x=(*it);//vrchol
+			int x=(*it).first;//vrchol
 			graph_.unsetEdge(v,x);
 			mapping_.unsetEdge(v,x);
 			//sousede
@@ -247,7 +262,7 @@ public:
 				 */
 				//(v,y) neni v graph_ a mapping_
 				//napojeni souseda na v
-			/*	graph_.unsetEdge(x,y);
+				graph_.unsetEdge(x,y);
 				graph_.setEdge(v,y);
 
 				//hrany parovani jsou podmnozinou hran grafu
@@ -264,17 +279,74 @@ public:
 			 * v parovani nevadi, pritomnost izolovanych vrcholu, maximalitu neovlivni
 			 */
 
-		/*}
+		}
 		//pokud existovala hrana (v,v) nastavit
 		if(b){
 			graph_.setEdge(v,v);
 		}
-		*/
+
+		std::cout<<"Novy graf"<<std::endl;
+		graph_.print();
+		std::cout<<"Nove parovani"<<std::endl;
 	}
 
 	static void cut(set_t & set)
 	{
-		//predpoklad:
+		//v set jsou hrany nalezene kytky i se stonkem
+		//stonek se pozna tak, ze jeho hrany jsou v mnozine dvakrat
+		//stonek je treba uriznout
+
+		std::map<int,int> stupne;
+		for(set_t::iterator it=set.begin();it!=set.end();++it)
+		{
+			std::map<int,int>::iterator yt=stupne.find((*it).first);
+			if(yt!=stupne.end())
+			{
+				(*yt).second++;
+			}
+			else{
+				stupne.insert(std::pair<int,int>((*it).first,1));
+			}
+
+			yt=stupne.find((*it).second);
+			if(yt!=stupne.end())
+			{
+				(*yt).second++;
+			}
+			else{
+				stupne.insert(std::pair<int,int>((*it).second,1));
+			}
+		}
+
+		set_t new_set;
+		std::map<int,int> v_forb;
+		//pro vrcholy "stupne" 4, krome se 3 sousedy - odebrat hrany
+		for(set_t::iterator it=set.begin();it<set.end();++it)
+		{
+			std::map<int,int>::iterator yt=stupne.find((*it).first);
+			if(yt!=stupne.end())
+			{
+				if((*yt).second!=4)
+				{
+					new_set.push_back(*it);
+				}
+				else
+				{
+
+				}
+			}
+		}
+
+		for(std::map<int,int>::iterator it=stupne.begin();it!=stupne.end();++it)
+		{
+			std::cout<<"deg("<<(*it).first<<")="<<(*it).second<<std::endl;
+		}
+
+		for(set_t::iterator it=new_set.begin();it!=new_set.end();++it)
+		{
+			std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
+		}
+
 	}
 
 	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)

@@ -255,6 +255,32 @@ test3()
 	if(m.isMapping()&&m.getEdges()==5) std::cout<<"OK"<<std::endl; else std::cout<<"KO"<<std::endl;
 	//5 hran na 10 vrcholech je perfektni parovani a je validni
 }
+
+void test4()
+{
+	Graph g(16,16);
+	g.setEdge(0,1);
+	g.setEdge(1,2);
+	g.setEdge(2,3);
+	g.setEdge(3,4);
+	g.setEdge(4,5);
+	g.setEdge(5,6);
+	g.setEdge(6,7);
+	g.setEdge(7,8);
+	g.setEdge(6,9);
+	g.setEdge(9,10);
+	g.setEdge(10,11);
+	g.setEdge(11,12);
+	g.setEdge(12,4);
+	g.setEdge(11,13);
+	g.setEdge(13,14);
+	g.setEdge(13,15);
+
+	g.print();
+	Graph m=MappingFinder::FindMaxMapping(g);
+	m.print();
+}
+
 int
 main(int argc, char** argv)
 {
@@ -268,4 +294,6 @@ main(int argc, char** argv)
 	test3();
 	std::cout<<"Test 2"<<std::endl;
 	test2();
+	std::cout<<"Test 4"<<std::endl;
+	test4();
 }
