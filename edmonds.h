@@ -168,6 +168,7 @@ public:
 	static inline Result finder(int v,int y, set_t & set, const les_t & l){
 		//najdu VSC nebo Kytku -> konec
 		//hledej z v cestu do korene k1
+
 		int k1=lookup_root(v,set,l);
 		if(k1==-1)
 			throw "Error";
@@ -189,9 +190,9 @@ public:
 
 	//0
 	static inline void augment(Graph & mapping_,set_t & set){
-		//std::cout<<"Augment"<<std::endl;
-		//mapping_.print();
-		/*std::cout<<"set: ";
+		/*std::cout<<"Augment"<<std::endl;
+		mapping_.print();
+		std::cout<<"set: ";
 		for(set_t::iterator it=set.begin();it!=set.end();++it)
 		{
 			std::cout<<"("<<(*it).first<<","<<(*it).second<<") ";
@@ -215,6 +216,7 @@ public:
 				}
 
 				a=b;
+
 			}
 		}
 

@@ -18,6 +18,7 @@ ${prog}: $(objs)
 %.o:%.cpp
 	$(CC) $(CFLAGS) -o $@ $<
 
-graph.o : edmonds.h
+${objs} : edmonds.h
+
 
 

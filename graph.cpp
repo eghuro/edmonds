@@ -11,13 +11,14 @@ using namespace nsp;
 
 bool Graph::unsetEdge(int x,int y)
 {
-//	std::cout<<"unset edge("<<x<<","<<y<<")"<<std::endl;
+	bool change=false;
 	if(legal_pair(x,y)){
 		for(int i=0;i<edges;++i)
 		{
 			if(neighbours_[x][i]==y)
 			{
 				neighbours_[x][i]=-1;
+				change=true;
 	//			std::cout<<"@@["<<x<<"]["<<i<<"]=-1"<<std::endl;
 				break;
 			}
@@ -29,9 +30,7 @@ bool Graph::unsetEdge(int x,int y)
 			{
 				int pom=neighbours_[x][i];
 				neighbours_[x][i]=neighbours_[x][j];
-				//std::cout<<"["<<x<<"]["<<i<<"]="<<neighbours_[x][j]<<std::endl;
 				neighbours_[x][j]=pom;
-				//std::cout<<"["<<x<<"]["<<j<<"]="<<pom<<std::endl;
 				j++;
 			}
 			else
@@ -67,7 +66,9 @@ bool Graph::unsetEdge(int x,int y)
 			}
 		}
 
-		e_used_--;
+		if(change){
+			e_used_--;
+		}
 		//print();
 		return true;
 	}
@@ -79,6 +80,7 @@ bool Graph::unsetEdge(int x,int y)
 
 bool Graph::setEdge(int x,int y)
 {
+	bool change=false;
 	if(legal_edge(x,y))
 	{
 		for(int i=0;i<edges;++i)
@@ -89,6 +91,7 @@ bool Graph::setEdge(int x,int y)
 			}
 			else if(neighbours_[x][i]==-1)
 			{
+				change=true;
 				neighbours_[x][i]=y;
 				break;
 			}
@@ -107,7 +110,9 @@ bool Graph::setEdge(int x,int y)
 			}
 		}
 
-		e_used_++;
+		if(change){
+			e_used_++;
+		}
 
 		return true;
 	}

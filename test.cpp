@@ -205,15 +205,67 @@ test1()
 }
 
 void
+test2()
+{
+	Graph g(16,18);
+	g.setEdge(0,1);
+	g.setEdge(1,2);
+	g.setEdge(2,3);
+	g.setEdge(15,3);
+	g.setEdge(3,4);
+	g.setEdge(2,4);
+	g.setEdge(4,5);
+	g.setEdge(4,7);
+	g.setEdge(7,8);
+	g.setEdge(7,6);
+	g.setEdge(6,14);
+	g.setEdge(14,5);
+	g.setEdge(5,9);
+	g.setEdge(14,11);
+	g.setEdge(10,14);
+	g.setEdge(10,11);
+	g.setEdge(11,12);
+	g.setEdge(12,13);
+	g.print();
+	Graph m=MappingFinder::FindMaxMapping(g);
+	m.print();
+	//if(m.isMapping()&&m.getEdges()==7)
+}
+
+void
 test3()
 {
+	Graph g(10,11);
+	g.setEdge(0,1);
+	g.setEdge(1,2);
+	g.setEdge(2,3);
+	g.setEdge(2,4);
+	g.setEdge(3,4);
+	g.setEdge(4,7);
+	g.setEdge(4,5);
+	g.setEdge(4,6);
+	g.setEdge(5,6);
+	g.setEdge(6,8);
+	g.setEdge(8,9);
 
+	g.print();
+	std::cout<<"..."<<std::endl;
+	Graph m=MappingFinder::FindMaxMapping(g);
+	m.print();
+	if(m.isMapping()&&m.getEdges()==5) std::cout<<"OK"<<std::endl; else std::cout<<"KO"<<std::endl;
+	//5 hran na 10 vrcholech je perfektni parovani a je validni
 }
 int
 main(int argc, char** argv)
 {
+	std::cout<<"Init"<<std::endl;
 	init();
+	std::cout<<"Test 0"<<std::endl;
 	test0();
+	std::cout<<"Test 1"<<std::endl;
 	test1();
+	std::cout<<"Test 3"<<std::endl;
 	test3();
+	std::cout<<"Test 2"<<std::endl;
+	test2();
 }

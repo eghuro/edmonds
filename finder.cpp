@@ -44,7 +44,7 @@ Result MappingFinder::find(Graph & graph_,Graph & mapping_,set_t & set, les_t & 
 				else
 				{//y not in L
 					f.push_back(y);
-					edge_t e=(*x).second.e;
+					edge_t e(v,y);
 					WRecord wr=WRecord(y,h+1,e);
 					l.insert(pair_t(y,wr));
 				}
