@@ -143,11 +143,12 @@ public:
 		//zkontrahuj kvet
 		shrink(g_k,m_k,set);
 		//zavolej se na G.K, M.K
-		//if(step(g_k,m_k))
-		//{//pokud M.K lze zlepsit - zlepsi M, konec
-			//expand(g_k,m_k,graph_,mapping_,set);
+		if(step(g_k,m_k))
+		{//pokud M.K lze zlepsit - zlepsi M, konec
+			expand(g_k,m_k,graph_,mapping_,set);
 			//return true;
-		//}
+			return false;
+		}
 		//pokud M.K nejde zlepsit - M je nejlepsi
 		return false;
 	}
@@ -204,14 +205,6 @@ public:
 
 	//0
 	static inline void augment(Graph & mapping_,set_t & set){
-		/*std::cout<<"Augment"<<std::endl;
-		mapping_.print();
-		std::cout<<"set: ";
-		for(set_t::iterator it=set.begin();it!=set.end();++it)
-		{
-			std::cout<<"("<<(*it).first<<","<<(*it).second<<") ";
-		}
-		std::cout<<std::endl;*/
 		//zlepsi M - otocit hrany v /vne parovani
 		//jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
 		if(!set.empty()){
@@ -228,165 +221,26 @@ public:
 				{
 					mapping_.setEdge(a,b);
 				}
-
 				a=b;
-
 			}
 		}
-
 	}
 
 	//2
-	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set)
+	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set);
 	//kontrakce kvetu (set)
 	//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
 	//zaroven v parovani totez
-	{
-		std::cout<<"Shrink"<<std::endl;
-		int v = set.front().first;
-		//zjistit, zda ex. hrana (v,v) v grafu (v parovani nebyla)
-		bool b=graph_.neighbours(v,v);
-		//vrcholy kvetu
-		for(set_t::const_iterator it=(++set.begin());it<set.end();++it)
-		{
-			int x=(*it).first;//vrchol
-			graph_.unsetEdge(v,x);
-			mapping_.unsetEdge(v,x);
-			//sousede
-			for(iter yt=graph_.getNeighbours(x).begin();yt<graph_.getNeighbours(v).end();++yt)
-			{
-				int y=(*yt);//soused x
-				/*
-				 * i pokud y je v set: prepoji se y na v a zrusi se hrana (x,y)
-				 * tim se zajisti, ze vzdy existuje hrana (x,v)
-				 */
-				//(v,y) neni v graph_ a mapping_
-				//napojeni souseda na v
-				graph_.unsetEdge(x,y);
-				graph_.setEdge(v,y);
 
-				//hrany parovani jsou podmnozinou hran grafu
-				if(mapping_.neighbours(x,y))
-				{
-					//pokud hrana byla i v parovani ...
-					mapping_.unsetEdge(x,y);
-					mapping_.setEdge(v,y);
-				}
-			}
 
-			/*
-			 * vrcholy uvedene v set odebrat z grafu - resp. co s izolovanymi vrcholy?
-			 * v parovani nevadi, pritomnost izolovanych vrcholu, maximalitu neovlivni
-			 */
+	static void cut(set_t & set);
 
-		}
-		//pokud existovala hrana (v,v) nastavit
-		if(b){
-			graph_.setEdge(v,v);
-		}
-
-		std::cout<<"Novy graf"<<std::endl;
-		graph_.print();
-		std::cout<<"Nove parovani"<<std::endl;
-	}
-
-	static void cut(set_t & set)
-	{
-		//v set jsou hrany nalezene kytky i se stonkem
-		//stonek se pozna tak, ze jeho hrany jsou v mnozine dvakrat
-		//stonek je treba uriznout
-		std::cout<<"cut"<<std::endl;
-		typedef std::map<int,std::vector<int> > str_t;
-		str_t mapa;
-		set_t remove;
-		for(set_t::iterator it=set.begin();it!=set.end();++it)
-		{
-			bool duplicit=false;
-			str_t::iterator a=mapa.find((*it).first);
-			if(a!=mapa.end())
-			{
-				//rozsiruji vektor, resp. hledam duplikat
-				for(std::vector<int>::iterator jt=(*a).second.begin();jt!=(*a).second.end();++jt)
-				{
-					if((*jt)==(*it).second)
-					{
-						//nalezen duplikat
-						duplicit=true;
-						remove.push_back(edge_t((*it).first,(*it).second));
-						(*a).second.erase(jt);
-						break;//iterator ve foru neplatny
-					}
-				}
-				if(!duplicit)
-				{
-					//insert
-					(*a).second.push_back((*it).second);
-				}
-			}
-			else
-			{
-				//novy vektor
-				std::vector<int> v;
-				v.push_back((*it).second);
-				mapa.insert(std::pair<int,std::vector<int> >((*it).first,v));
-			}
-			duplicit=false;
-			str_t::iterator b=mapa.find((*it).second);
-			if(b!=mapa.end())
-			{
-				for(std::vector<int>::iterator jt=(*b).second.begin();jt!=(*b).second.end();++jt)
-				{
-					if((*jt)==(*it).first)
-					{
-						duplicit=true;
-						(*b).second.erase(jt);
-						break;
-					}
-				}
-			}
-			else
-			{
-				//novy vektor
-				std::vector<int> v;
-				v.push_back((*it).first);
-				mapa.insert(std::pair<int,std::vector<int> >((*it).second,v));
-			}
-		}
-
-		for(set_t::iterator it=remove.begin();it!=remove.end();++it)
-		{
-			std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
-		}
-
-		std::cout<<"==="<<std::endl<<"Remaining"<<std::endl;
-
-		set_t set2;
-		for(set_t::iterator it=set.begin();it!=set.end();++it)
-		{
-			bool toRemove=false;
-			for(set_t::iterator jt=remove.begin();jt!=remove.end();++jt)
-			{
-				if(((*jt).first==(*it).first)&&((*jt).second==(*it).second))
-				{
-					toRemove=true;
-					break;
-				}
-			}
-			if(!toRemove)
-			{
-				set2.push_back(edge_t((*it).first,(*it).second));
-			}
-		}
-		set=set2;//copy
-		for(set_t::iterator it=set.begin();it!=set.end();++it)
-		{
-			std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
-		}
-	}
 
 	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
 		//TODO: pokud M.K lze zlepsit - zlepsi M, konec
-	{}
+	{
+		std::cout<<"Expand"<<std::endl;
+	}
 
 	//true ... zvetsili jsme parovani
 	//0
