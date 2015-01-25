@@ -18,6 +18,9 @@ typedef std::vector<int>::iterator iter;
 class InconsistentStructureException : public std::exception {};
 class UnexpectedResultException : public std::exception {};
 
+/**
+ * Struktura pro predavani sousedu nejakeho vrcholu v grafu pres 2 iteratory
+ */
 struct Neighbours
 {
 private:
@@ -38,14 +41,30 @@ public:
 	bool nil;
 };
 
+/**
+ * Graf seznamem sousedu
+ */
 class Graph
 {
 public:
 
+	/**
+	 * Pocet vrcholu
+	 * @return pocet vrcholu
+	 */
 	inline int getVertices() const { return vertices; }
 
+	/**
+	 * Pocet hran
+	 * @return pocet pouzitych hran
+	 */
 	inline int getEdges() const { return e_used_; }
 
+	/**
+	 * Vytvori graf o danem poctu vrcholu a hran, pro oba parametry existuje default
+	 * @param edges_l Pocet hran slouzi jako horni mez
+	 * @param vertices_l Pocet vrcholu
+	 */
 	Graph(int vertices_l=V_COUNT_DEF,int edges_l=E_COUNT_DEF):
 		edges(edges_l),
 		vertices(vertices_l),
@@ -54,21 +73,57 @@ public:
 	{
 	}
 
+	/**
+	 * Vytiskne graf na stdout
+	 */
 	void print() const;
 
-	bool unsetEdge(int,int);
+	/**
+	 * Po zavolani dane metody nebude mezi vrcholy vest hrana
+	 * @param x vrchol
+	 * @param y vrchol
+	 * @return zda byla odstranena hrana
+	 */
+	bool unsetEdge(int x,int y);
 
-	bool setEdge(int,int);
+	/**
+	 * Po zavolani dane metody budde mezi vrcholy vest hrana
+	 * @param x vrchol
+	 * @param y vrchol
+	 * @return zda byla nastavena hrana
+	 */
+	bool setEdge(int x,int y);
 
+	/**
+	 * Vrati seznam sousedu daneho vrcholu
+	 * @param v vrchol
+	 * @return struktura umoznuici pristup k sousedum
+	 */
 	Neighbours getNeighbours(int v);
 
-	bool neighbours(int, int) const;
+	/**
+	 * Metoda pro zjisteni, zda jsou dva vrcholy spojeny hranou
+	 * @param x vrchol
+	 * @param y vrchol
+	 * @return existuje v grafu hrana mezi x a y
+	 */
+	bool neighbours(int x, int y) const;
 
+	/**
+	 * Porovnani dvou grafu pro usnadneni testovani
+	 * Netestuje isomorfismus, ale zavisi na spravnem ocislovani vrcholu
+	 * (testuje zda vrchol i je spojen s vrcholem j pro vsechny pripustne dvojice)
+	 */
 	bool operator == (const Graph&) const;
 
+	/**
+	 * Vrati zda dany graf je parovani - pro usnadneni testovani
+	 */
 	bool isMapping() const;
 
-#ifndef DEBUG
+#ifdef DEBUG
+public:
+#else
 private:
 #endif
 	static const int V_COUNT_DEF=1;
@@ -89,6 +144,9 @@ private:
 	}
 };
 
+/**
+ * Pomocna struktura pro stavbu lesa v BFS
+ */
 struct WRecord
 {
 public:
@@ -102,10 +160,16 @@ public:
 	{}
 } ;
 
+/**
+ * Mozne vysledky hledani - zlepsujici cesta, kytka, nic
+ */
 enum Result{
 	AP,BLOSSOM,NONE
 };
 
+/**
+ * Hledac parovani
+ */
 class MappingFinder{
 #ifndef DEBUG
 private:
@@ -119,46 +183,34 @@ public:
 	typedef std::deque<edge_t> set_t;
 	typedef std::pair<int,WRecord> pair_t;
 	
-	//0
+	/**
+	 * Byla nalezena kytka:
+	 * urizni stonek, zkontrahuj kvet, pokud M.K lze zlepsit, zlepsi M, jinak M je nejlepsi
+	 */
 	static inline bool blossom(Graph & graph_,Graph & mapping_,set_t & set,const les_t l)
 	{
-		std::cout<<"Blossom"<<std::endl;
-		std::cout<<"Graf"<<std::endl;
-		graph_.print();
-
-		std::cout<<"Parovani"<<std::endl;
-		mapping_.print();
-
-		std::cout<<"Set"<<std::endl;
-		for(set_t::iterator it=set.begin();it!=set.end();++it)
-		{
-			std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
-		}
-		std::cout<<std::endl<<std::endl<<std::endl;
-		//kontrakce kvetu
 		Graph g_k=graph_;
 		Graph m_k=mapping_;
-		//urizni stonek
-		cut(set);
-		//zkontrahuj kvet
-		shrink(g_k,m_k,set);
-		//zavolej se na G.K, M.K
-		if(step(g_k,m_k))
+		int v = cut(set);
+		shrink(g_k,m_k,set,v);
+		bool st=false;
+		while(step(g_k,m_k)) st=true;
+		if(st)
 		{//pokud M.K lze zlepsit - zlepsi M, konec
-			expand(g_k,m_k,graph_,mapping_,set);
-			//return true;
-			return false;
+			expand(g_k,m_k,graph_,mapping_,set,v);
+			return true;
 		}
 		//pokud M.K nejde zlepsit - M je nejlepsi
 		return false;
 	}
 
-	//0
+	/**
+	 * najdi volne vrcholy a vloz do f a do l na hladinu 0
+	 * volny vrchol - neni v zadne parovaci hrane
+	 */
 	static inline queue_t prepare(Graph & mapping_, les_t & l)
 	{
 		queue_t f;
-		//najdi volne vrcholy a vloz do f a do l na hladinu 0
-		//volny vrchol - neni v zadne parovaci hrane
 		for(int i=0;i<mapping_.getVertices();i++)
 		{
 			if(mapping_.getNeighbours(i).begin()==mapping_.getNeighbours(i).end())
@@ -172,17 +224,21 @@ public:
 		return f;
 	}
 
-	//0
+	/**
+	 * zkus najit VSC nebo kytku
+	 */
 	static Result find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l) throw (InconsistentStructureException);
 
-	//0
+	/**
+	 * Najdi koren ve strome
+	 */
 	static int lookup_root(int vertex, set_t & set, const les_t & l);
 
-	//0
+	/**
+	 * Najdu VSC nebo kytku
+	 */
 	static inline Result finder(int v,int y, set_t & set, const les_t & l){
-		//najdu VSC nebo Kytku -> konec
 		//hledej z v cestu do korene k1
-
 		int k1=lookup_root(v,set,l);
 		if(k1==-1)
 			throw "Error";
@@ -203,10 +259,11 @@ public:
 		}
 	}
 
-	//0
+	/**
+	 * Zlepsi parovani podel cesty
+	 * jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
+	 */
 	static inline void augment(Graph & mapping_,set_t & set){
-		//zlepsi M - otocit hrany v /vne parovani
-		//jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
 		if(!set.empty()){
 			while(!set.empty()){
 				edge_t e=set.front();
@@ -226,29 +283,36 @@ public:
 		}
 	}
 
-	//2
-	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set);
-	//kontrakce kvetu (set)
-	//v grafu: necham jeden vrchol v, pro zbytek: hrany mimo set napojit na v, odebrat vrcholy setu
-	//zaroven v parovani totez
+	/**
+	 * Kontrakce kvetu v set
+	 *
+	 */
+	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set,int v);
 
+	/**
+	 * Urizni stonek kytky
+	 */
+	static int cut(set_t & set);
 
-	static void cut(set_t & set);
+	/**
+	 * rozvin g.k a m.k zpet do g, m
+	 */
+	static void expand(const Graph & g_k_,  Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set, int v);
 
-
-	static void expand(const Graph & g_k_,const Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set)
-		//TODO: pokud M.K lze zlepsit - zlepsi M, konec
-	{
-		std::cout<<"Expand"<<std::endl;
-	}
-
-	//true ... zvetsili jsme parovani
-	//0
+	/**
+	 * Jeden krok algoritmu
+	 * @param g graf
+	 * @param m stavajici parovani, ktere mame zlepsit
+	 * @return true - parovani bylo zlepseno; false parovani je nejlepsi
+	 */
 	static bool step(Graph & g,Graph & m);
 
 #ifndef DEBUG
 public:
 #endif
+	/**
+	 * Najdi nejlepsi parovani v grafu
+	 */
 	static inline Graph FindMaxMapping(Graph & g)
 	{
 		Graph m(g.getVertices(),g.getEdges());

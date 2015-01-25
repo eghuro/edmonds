@@ -5,8 +5,6 @@
  *      Author: alex
  */
 
-
-
 #define DEBUG
 #include "edmonds.h"
 #include <iostream>
@@ -38,7 +36,6 @@ init()
 	g=Graph(1,1);
 	if((g.getVertices()==1)&&(g.legal_edge(0,0))&&g.setEdge(0,0)&&(g.getEdges()==1))
 	{
-		g.print();
 		std::cout<<"OK"<<std::endl;
 	}
 	else
@@ -48,7 +45,6 @@ init()
 	g=Graph(3,3);
 	if((g.getVertices()==3)&&g.setEdge(0,1)&&g.setEdge(0,2)&&g.setEdge(1,2)&&g.neighbours(0,1)&&g.neighbours(2,0)&&g.neighbours(1,2)&&(g.getEdges()==3))
 	{
-		g.print();
 		std::cout<<"OK"<<std::endl;
 	}
 	else
@@ -57,7 +53,6 @@ init()
 		std::cout<<"Fail  init #3"<<std::endl;
 	}
 	if(g.unsetEdge(0,2)){
-		g.print();
 		std::cout<<"OK"<<std::endl;
 	}
 	else
@@ -67,20 +62,19 @@ init()
 	}
 
 	Neighbours n1=g.getNeighbours(1);
-	for(std::vector<int>::iterator it=n1.begin();it<n1.end();++it)
-	{
-		std::cout<<*it<<" ";
-	}
-	std::cout<<std::endl;
+	std::vector<int>::iterator it=n1.begin();
+	if((*it)!=0) std::cout<<"Fail #5"<<std::endl;
+	++it;
+	if((*it)!=2) std::cout<<"Fail #6"<<std::endl;
 
 	if(!g.getNeighbours(5).nil)
 	{
-		std::cout<<"Fail #5"<<std::endl;
+		std::cout<<"Fail #7"<<std::endl;
 	}
 
 	if(!g.neighbours(0,1)||g.neighbours(0,2))
 	{
-		std::cout<<"Fail #6"<<std::endl;
+		std::cout<<"Fail #8"<<std::endl;
 	}
 }
 
@@ -96,17 +90,6 @@ test0()
 	g.setEdge(2,5);
 
 	Graph m(6,6);
-	/*bool b = MappingFinder::step(g,m);
-	if(b)
-	{
-		std::cout<<"Zlepseno parovani"<<std::endl;
-	}
-	else
-	{
-		std::cout<<"Parovani nezlepseno"<<std::endl;
-	}
-	std::cout<<"Parovani:"<<std::endl;
-	m.print();*/
 	MappingFinder::les_t l;
 	MappingFinder::queue_t s = MappingFinder::prepare(m,l);
 	if(s.size()==6)
@@ -117,15 +100,9 @@ test0()
 	{
 		std::cout<<"Velikost KO"<<std::endl;
 	}
-	for(MappingFinder::queue_t::iterator it=s.begin();it<s.end();++it)
-	{
-		std::cout<<(*it)<<" ";
-	}
-	std::cout<<std::endl;
 
 	MappingFinder::set_t set;
 
-	g.print();
 	for(int i=0;i<5;++i)
 	{
 		MappingFinder::les_t l;
@@ -133,23 +110,15 @@ test0()
 		switch(r)
 		{
 		case AP:
-			std::cout<<"augmenting path"<<std::endl;
-			for(MappingFinder::set_t::iterator it=set.begin();it<set.end();++it)
-			{
-				std::cout<<"("<<(*it).first<<","<<(*it).second<<") ";
-			}
-			std::cout<<std::endl;
 			MappingFinder::augment(m,set);
 		break;
-		case BLOSSOM: std::cout<<"blossom"<<std::endl;break;
-		case NONE: std::cout<<"none"<<std::endl;break;
+		default:
+			break;
 		}
-		m.print();
 		if(!m.isMapping()){
 			std::cout<<"Chybny mezivystup - nejde o parovani"<<std::endl;
 			break;
 		}
-		std::cout<<"====="<<std::endl;
 	}
 
 	Graph expected(6,3);
@@ -177,7 +146,6 @@ test1()
 	g.setEdge(2,4);
 	g.setEdge(3,4);
 	g.setEdge(4,5);
-	g.print();
 
 	Graph m=MappingFinder::FindMaxMapping(g);
 
@@ -226,10 +194,11 @@ test2()
 	g.setEdge(10,11);
 	g.setEdge(11,12);
 	g.setEdge(12,13);
-	g.print();
 	Graph m=MappingFinder::FindMaxMapping(g);
-	m.print();
-	//if(m.isMapping()&&m.getEdges()==7)
+	if(m.isMapping()&&m.getEdges()==8) std::cout<<"OK"<<std::endl; else{
+		std::cout<<"KO"<<std::endl;
+		m.print();
+	}
 }
 
 void
@@ -248,10 +217,7 @@ test3()
 	g.setEdge(6,8);
 	g.setEdge(8,9);
 
-	g.print();
-	std::cout<<"..."<<std::endl;
 	Graph m=MappingFinder::FindMaxMapping(g);
-	m.print();
 	if(m.isMapping()&&m.getEdges()==5) std::cout<<"OK"<<std::endl; else std::cout<<"KO"<<std::endl;
 	//5 hran na 10 vrcholech je perfektni parovani a je validni
 }
@@ -276,9 +242,20 @@ void test4()
 	g.setEdge(13,14);
 	g.setEdge(13,15);
 
-	g.print();
-	Graph m=MappingFinder::FindMaxMapping(g);
-	m.print();
+	Graph m(16,7);
+	m.setEdge(0,1);
+	m.setEdge(2,3);
+	m.setEdge(4,5);
+	m.setEdge(6,7);
+	m.setEdge(9,10);
+	m.setEdge(11,12);
+	m.setEdge(13,14);
+	Graph m0=MappingFinder::FindMaxMapping(g);
+	if(m==m0) std::cout<<"OK"<<std::endl;
+	else{
+		std::cout<<"KO"<<std::endl;
+		m0.print();
+	}
 }
 
 int
