@@ -133,12 +133,14 @@ private:
 
 	std::vector<std::vector<int> > neighbours_;
 
-	inline bool legal_pair(int x,int y) const
+	inline bool
+	legal_pair(int x,int y) const
 	{
 		return (x>=0)&&(x<=vertices)&&(y>=0)&&(y<=vertices);
 	}
 
-	inline bool legal_edge(int x,int y) const
+	inline bool
+	legal_edge(int x,int y) const
 	{
 		return (e_used_<edges)&&legal_pair(x,y);
 	}
@@ -187,7 +189,8 @@ public:
 	 * Byla nalezena kytka:
 	 * urizni stonek, zkontrahuj kvet, pokud M.K lze zlepsit, zlepsi M, jinak M je nejlepsi
 	 */
-	static inline bool blossom(Graph & graph_,Graph & mapping_,set_t & set,const les_t l)
+	static inline bool
+	blossom(Graph & graph_,Graph & mapping_,set_t & set,const les_t l)
 	{
 		Graph g_k=graph_;
 		Graph m_k=mapping_;
@@ -208,7 +211,8 @@ public:
 	 * najdi volne vrcholy a vloz do f a do l na hladinu 0
 	 * volny vrchol - neni v zadne parovaci hrane
 	 */
-	static inline queue_t prepare(Graph & mapping_, les_t & l)
+	static inline queue_t
+	prepare(Graph & mapping_, les_t & l)
 	{
 		queue_t f;
 		for(int i=0;i<mapping_.getVertices();i++)
@@ -227,17 +231,21 @@ public:
 	/**
 	 * zkus najit VSC nebo kytku
 	 */
-	static Result find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l) throw (InconsistentStructureException);
+	static Result
+	find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l) throw (InconsistentStructureException);
 
 	/**
 	 * Najdi koren ve strome
 	 */
-	static int lookup_root(int vertex, set_t & set, const les_t & l);
+	static int
+	lookup_root(int vertex, set_t & set, const les_t & l);
 
 	/**
 	 * Najdu VSC nebo kytku
 	 */
-	static inline Result finder(int v,int y, set_t & set, const les_t & l){
+	static inline Result
+	finder(int v,int y, set_t & set, const les_t & l)
+	{
 		//hledej z v cestu do korene k1
 		int k1=lookup_root(v,set,l);
 		if(k1==-1)
@@ -263,7 +271,9 @@ public:
 	 * Zlepsi parovani podel cesty
 	 * jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
 	 */
-	static inline void augment(Graph & mapping_,set_t & set){
+	static inline void
+	augment(Graph & mapping_,set_t & set)
+	{
 		if(!set.empty()){
 			while(!set.empty()){
 				edge_t e=set.front();
@@ -287,7 +297,8 @@ public:
 	 * Kontrakce kvetu v set
 	 *
 	 */
-	static void shrink(Graph & graph_,Graph & mapping_,const set_t & set,int v);
+	static void
+	shrink(Graph & graph_,Graph & mapping_,const set_t & set,int v);
 
 	/**
 	 * Urizni stonek kytky
@@ -297,7 +308,8 @@ public:
 	/**
 	 * rozvin g.k a m.k zpet do g, m
 	 */
-	static void expand(const Graph & g_k_,  Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set, int v);
+	static void
+	expand(const Graph & g_k_,  Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set, int v);
 
 	/**
 	 * Jeden krok algoritmu
@@ -313,7 +325,8 @@ public:
 	/**
 	 * Najdi nejlepsi parovani v grafu
 	 */
-	static inline Graph FindMaxMapping(Graph & g)
+	static inline Graph
+	FindMaxMapping(Graph & g)
 	{
 		Graph m(g.getVertices(),g.getEdges());
 		while(step(g,m));;

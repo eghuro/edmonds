@@ -9,7 +9,8 @@
 
 using namespace nsp;
 
-bool Graph::unsetEdge(int x,int y)
+bool
+Graph::unsetEdge(int x,int y)
 {
 	bool change=false;
 	if(legal_pair(x,y)){
@@ -19,7 +20,6 @@ bool Graph::unsetEdge(int x,int y)
 			{
 				neighbours_[x][i]=-1;
 				change=true;
-	//			std::cout<<"@@["<<x<<"]["<<i<<"]=-1"<<std::endl;
 				break;
 			}
 		}
@@ -44,7 +44,6 @@ bool Graph::unsetEdge(int x,int y)
 			if(neighbours_[y][i]==x)
 			{
 				neighbours_[y][i]=-1;
-				//std::cout<<"@@["<<y<<"]["<<i<<"]=-1"<<std::endl;
 				break;
 			}
 		}
@@ -55,9 +54,7 @@ bool Graph::unsetEdge(int x,int y)
 			{
 				int pom=neighbours_[y][i];
 				neighbours_[y][i]=neighbours_[y][j];
-				//std::cout<<"["<<y<<"]["<<i<<"]="<<neighbours_[y][j]<<std::endl;
 				neighbours_[y][j]=pom;
-				//std::cout<<"["<<y<<"]["<<j<<"]="<<pom<<std::endl;
 				j++;
 			}
 			else
@@ -69,7 +66,6 @@ bool Graph::unsetEdge(int x,int y)
 		if(change){
 			e_used_--;
 		}
-		//print();
 		return true;
 	}
 	else
@@ -78,7 +74,8 @@ bool Graph::unsetEdge(int x,int y)
 	}
 }
 
-bool Graph::setEdge(int x,int y)
+bool
+Graph::setEdge(int x,int y)
 {
 	bool change=false;
 	if(legal_edge(x,y))
@@ -123,7 +120,8 @@ bool Graph::setEdge(int x,int y)
 
 }
 
-void Graph::print() const
+void
+Graph::print() const
 {
 	std::cout<<"Neighbours"<<std::endl;
 	for(int i=0;i<vertices;++i)
@@ -139,7 +137,8 @@ void Graph::print() const
 	}
 }
 
-Neighbours Graph::getNeighbours(int v)
+Neighbours
+Graph::getNeighbours(int v)
 {
 	//pokud nenastane, ze odebereme hranu a nevratime
 	if((v>=0)&&(v<=vertices)){
@@ -157,7 +156,8 @@ Neighbours Graph::getNeighbours(int v)
 	else return Neighbours();
 }
 
-bool Graph::neighbours(int x, int y) const
+bool
+Graph::neighbours(int x, int y) const
 {
 	if(legal_pair(x,y))
 	{
@@ -167,10 +167,6 @@ bool Graph::neighbours(int x, int y) const
 			{
 				return true;
 			}
-			/*else if(neighbours_[x][i]==-1)
-			{
-				return false;
-			}*/
 		}
 		return false;
 	}
@@ -179,8 +175,8 @@ bool Graph::neighbours(int x, int y) const
 	}
 }
 
-//TODO potreba overit isomorfismus nebo vyhodit
-bool Graph::operator == (const Graph& x) const
+bool
+Graph::operator == (const Graph& x) const
 {
 	if(vertices==x.getVertices())
 	{
@@ -202,7 +198,8 @@ bool Graph::operator == (const Graph& x) const
 	return false;
 }
 
-bool Graph::isMapping() const
+bool
+Graph::isMapping() const
 {
 	for(int i=0;i<vertices;++i)
 	{

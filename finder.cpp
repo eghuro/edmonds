@@ -5,13 +5,11 @@
  *      Author: alex
  */
 
-
-
-
 #include "edmonds.h"
 using namespace nsp;
 
-Result MappingFinder::find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l) throw (InconsistentStructureException)
+Result
+MappingFinder::find(Graph & graph_,Graph & mapping_,set_t & set, les_t & l) throw (InconsistentStructureException)
 {
 	//najdi volne vrcholy a vloz do f a do l na hladinu 0
 	queue_t f=prepare(mapping_,l);
@@ -106,7 +104,8 @@ Result MappingFinder::find(Graph & graph_,Graph & mapping_,set_t & set, les_t & 
 	return NONE;
 }
 
-int MappingFinder::lookup_root(int vertex, set_t & set, const les_t & l)
+int
+MappingFinder::lookup_root(int vertex, set_t & set, const les_t & l)
 {
 	//hledam koren ve strome (l)
 	int v=vertex;
@@ -130,9 +129,9 @@ int MappingFinder::lookup_root(int vertex, set_t & set, const les_t & l)
 	return -1;
 }
 
-bool MappingFinder::step(Graph & g,Graph & m)
+bool
+MappingFinder::step(Graph & g,Graph & m)
 {
-	//std::cout<<"Step"<<std::endl;
 	set_t set;
 	les_t l;
 	try{
@@ -150,7 +149,6 @@ bool MappingFinder::step(Graph & g,Graph & m)
 			blossom(g,m,set,l);
 			while(find(g,m,set,l)==AP) augment(m,set);
 			return false;
-			//return blossom(g,m,set,l);
 			break;
 		case NONE:
 			//m je nejvetsi
@@ -166,12 +164,9 @@ bool MappingFinder::step(Graph & g,Graph & m)
 	}
 }
 
-int MappingFinder::cut(set_t & set)
+int
+MappingFinder::cut(set_t & set)
 {
-	//v set jsou hrany nalezene kytky i se stonkem
-	//stonek se pozna tak, ze jeho hrany jsou v mnozine dvakrat
-	//stonek je treba uriznout
-	//std::cout<<"cut"<<std::endl;
 	typedef std::map<int,std::vector<int> > str_t;
 	str_t mapa;
 	set_t remove;
@@ -232,13 +227,6 @@ int MappingFinder::cut(set_t & set)
 		}
 	}
 
-	//for(set_t::iterator it=remove.begin();it!=remove.end();++it)
-	//{
-		//std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
-	//}
-
-	//std::cout<<"==="<<std::endl<<"Remaining"<<std::endl;
-
 	set_t set2;
 	int vrchol=-1;
 	for(set_t::iterator it=set.begin();it!=set.end();++it)
@@ -266,18 +254,12 @@ int MappingFinder::cut(set_t & set)
 		}
 	}
 	set=set2;//copy
-	//for(set_t::iterator it=set.begin();it!=set.end();++it)
-	//{
-		//std::cout<<"("<<(*it).first<<","<<(*it).second<<")"<<std::endl;
-	//}
 	return vrchol;
 }
 
-void MappingFinder::shrink(Graph & graph_,Graph & mapping_,const set_t & set,int v)
+void
+MappingFinder::shrink(Graph & graph_,Graph & mapping_,const set_t & set,int v)
 {
-	//std::cout<<"Shrink"<<std::endl;
-	//int v = set.front().first;
-	//std::cout<<v<<std::endl;
 	//zjistit, zda ex. hrana (v,v) v grafu (v parovani nebyla)
 	bool b=graph_.neighbours(v,v);
 
@@ -303,11 +285,6 @@ void MappingFinder::shrink(Graph & graph_,Graph & mapping_,const set_t & set,int
 						int i=(*it);
 						graph_.unsetEdge(a,i);
 						graph_.setEdge(v,i);
-						/*if(mapping_.neighbours(a,i))
-						{
-							mapping_.unsetEdge(a,i);
-							mapping_.setEdge(v,i);
-						}*/
 					}
 				}
 			}
@@ -350,7 +327,8 @@ void MappingFinder::shrink(Graph & graph_,Graph & mapping_,const set_t & set,int
 	}
 }
 
-void MappingFinder::expand(const Graph & g_k_,  Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set, int v)
+void
+MappingFinder::expand(const Graph & g_k_,  Graph & m_k_, Graph & graph_, Graph & mapping_,const set_t & set, int v)
 //pokud M.K lze zlepsit - zlepsi M, konec
 {
 	std::cout<<"Expand"<<std::endl;

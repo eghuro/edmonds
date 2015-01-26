@@ -222,7 +222,8 @@ test3()
 	//5 hran na 10 vrcholech je perfektni parovani a je validni
 }
 
-void test4()
+void
+test4()
 {
 	Graph g(16,16);
 	g.setEdge(0,1);
