@@ -1,16 +1,18 @@
-Hledání párování v obecných grafech Edmondsovým algoritmem
+Hledani parovani v obecnych grafech Edmondsovym algoritmem
 
 Pouziti:
 Parovani se hleda statickou metodou MappingFinder::FindMaxMapping(Graph & g)
-Vstup i vystup je instance tridy Graph. Ta je detailneji popsana v dokumentaci, v zasade se vsak pouziva nasledovne:
+Vstup i vystup je instance tridy Graph. Ta je detailneji popsana v dokumentaci tridy, v zasade se vsak pouziva nasledovne:
 * v konstruktoru se nastavi pocet vrcholu a pocet hran
-	Graph(int vertices_l,int edges_l); defaultni hodnory jsou 1 pro oba parametry
+	Graph(int vertices_l,int edges_l); defaultni hodnoty jsou 1 pro oba parametry
  napr.: Graph g(3,3);
 * metodou setEdge(int,int) se nastavi hrana mezi dvema vrcholy. Vrcholy jsou cislovany od 0.
 * metodou print() lze vypsat graf na standardni vystup (jako seznam sousedu)
 * pokud je znamo, jak ma vypadat vysledne parovani, lze si predpripravit kontrolni data a pouzit operator ==
 	ten vsak netestuje isomorfismus! vysledek zavisi na ocislovani vrcholu
 Jde o knihovnu, pouzije se pomoci #include "edmonds.h"
+V edmonds.h je take dokumentace jednotlivych trid a metod.
+
 Pouzitim #define DEBUG lze pristupovat k soukromym metodam a polozkam jednotlivych trid
 V souboru test.cpp je predpripravena sada 5 testu fungovani algoritmu (+ test funkcnosti tridy Graph)
 Lze zkompilovat pomoci "make test" a spustit vygenerovanou binarku - "test"
