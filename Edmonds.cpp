@@ -1,10 +1,13 @@
+/*
+ * Copyright 2015 Alexandr Mansurov
+ */
 // Edmonds.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
-#include "edmonds.h"
+#include "./stdafx.h"
+#include "./edmonds.h"
 
-using namespace nsp;
+// using namespace nsp;
 
 /*int _tmain(int argc, _TCHAR* argv[])
 {

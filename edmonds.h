@@ -10,9 +10,9 @@
 #include <memory>
 #include <map>
 #include <set>
-#include<algorithm>
-#include<iostream>
-#include<stdexcept>
+#include <algorithm>
+#include <iostream>
+#include <stdexcept>
 
 namespace nsp {
 typedef std::pair<int, int> edge_t;
@@ -26,12 +26,19 @@ class UnexpectedResultException : public std::exception {};
  */
 struct Neighbours {
  public:
-  Neighbours():nil(true) {
-  std::vector<int> x;
-  a = x.begin();
-  b = x.end();
+  Neighbours():nil(true) {  // ctor
+    std::vector<int> x;
+    a = x.begin();
+    b = x.end();
   }
+
   Neighbours(iter beg, iter end):nil(false), a(beg), b(end)  {}
+
+  Neighbours(const Neighbours& other) = default;  // copy ctor
+  // Neighbours(Neighbours&& other) noexcept = default;  // move ctor
+  ~Neighbours() noexcept = default;  // dtor
+  Neighbours& operator= (const Neighbours& other) = default;  // cpy ament otor
+  Neighbours& operator= (Neighbours&& other) = default;  // move assignment otor
 
   inline iter begin() const { return a; }
   inline iter end() const { return b; }
@@ -116,6 +123,12 @@ class Graph {
    */
   bool isMapping() const;
 
+  Graph(const Graph& other) = default;  // copy ctor
+  // Graph (Graph&& other) noexcept = default;  // move ctor
+  ~Graph() noexcept = default;  // dtor
+  Graph& operator= (const Graph& other) = default;  // copy assignment otor
+  Graph& operator= (Graph&& other) = default;  // move assignment otor
+
 #ifdef DEBUG //NOLINT
  public: //NOLINT
 #else //NOLINT
@@ -180,15 +193,17 @@ class MappingFinder{
    * urizni stonek, zkontrahuj kvet, pokud M.K lze zlepsit, zlepsi M, jinak M je nejlepsi
    */
   static inline bool
-  blossom(Graph & graph_, Graph & mapping_, set_t & set, const les_t l) {
-    Graph g_k = graph_;
-    Graph m_k = mapping_;
+  blossom(Graph * graph_, Graph * mapping_, set_t * set, const les_t * l) {
+    // kopie pro vystup
+    // Graph * g_k = new Graph((*graph_));
+    std::unique_ptr<Graph> g_k(new Graph((*graph_)));
+    std::unique_ptr<Graph> m_k(new Graph((*mapping_)));
     int v = cut(set);
-    shrink(g_k, m_k, set, v);
+    shrink(g_k.get(), m_k.get(), set, v);
     bool st = false;
-    while ( step(g_k, m_k) ) st = true;
+    while ( step(g_k.get(), m_k.get()) ) st = true;
     if (st) {  // pokud M.K lze zlepsit - zlepsi M, konec
-      expand(g_k, m_k, graph_, mapping_, set, v);
+      expand(g_k.get(), m_k.get(), graph_, mapping_, set, v);
       return true;
     }
     // pokud M.K nejde zlepsit - M je nejlepsi
@@ -199,15 +214,15 @@ class MappingFinder{
    * najdi volne vrcholy a vloz do f a do l na hladinu 0
    * volny vrchol - neni v zadne parovaci hrane
    */
-  static inline queue_t
-  prepare(Graph & mapping_, les_t & l) {
-    queue_t f;
-    for (int i = 0; i < mapping_.getVertices(); i++) {
-      if (mapping_.getNeighbours(i).begin() ==
-                                             mapping_.getNeighbours(i).end()) {
+  static inline std::unique_ptr<queue_t>
+  prepare(Graph * mapping_, les_t * l) {
+    std::unique_ptr<queue_t> f (new queue_t);
+    for (int i = 0; i < (*mapping_).getVertices(); i++) {
+      if ((*mapping_).getNeighbours(i).begin() ==
+                                          (*mapping_).getNeighbours(i).end()) {
         // v parovani nema sousedy - izolovany vrchol - volny vrchol
-        f.push_back(i);
-        l.insert(pair_t(i, WRecord(i, 0)));
+        (*f).push_back(i);
+        (*l).insert(pair_t(i, WRecord(i, 0)));
       }
     }
 
@@ -218,20 +233,20 @@ class MappingFinder{
    * zkus najit VSC nebo kytku
    */
   static Result
-  find(Graph & graph_, Graph & mapping_, set_t & set, les_t & l)
+  find(Graph * graph_, Graph * mapping_, set_t * set, les_t * l)
   throw(InconsistentStructureException);
 
   /**
    * Najdi koren ve strome
    */
   static int
-  lookup_root(int vertex, set_t & set, const les_t & l);
+  lookup_root(int vertex, set_t * set, const les_t * l);
 
   /**
    * Najdu VSC nebo kytku
    */
   static inline Result
-  finder(int v, int y, set_t & set, const les_t & l) {
+  finder(int v, int y, set_t * set, const les_t * l) {
     // hledej z v cestu do korene k1
     int k1 = lookup_root(v, set, l);
     if (k1 == -1) throw "Error";
@@ -240,10 +255,10 @@ class MappingFinder{
     if (k2 == -1) throw "Error";
     // k1=k2 -> kytka, k1!=k2 -> VSC
     if (k1 == k2) {
-      set.push_back(std::pair<int, int>(v, y));
+      (*set).push_back(std::pair<int, int>(v, y));
       return BLOSSOM;
     } else {
-      set.push_back(edge_t(v, y));
+      (*set).push_back(edge_t(v, y));
       return AP;
     }
   }
@@ -253,17 +268,17 @@ class MappingFinder{
    * jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
    */
   static inline void
-  augment(Graph & mapping_, set_t & set) {
-    if (!set.empty()) {
-      while (!set.empty()) {
-        edge_t e = set.front();
+  augment(Graph * mapping_, set_t * set) {
+    if (!(*set).empty()) {
+      while (!(*set).empty()) {
+        edge_t e = (*set).front();
         int a = e.first;
         int b = e.second;
-        set.pop_front();
-        if (mapping_.neighbours(a, b)) {
-          mapping_.unsetEdge(a, b);
+        (*set).pop_front();
+        if ((*mapping_).neighbours(a, b)) {
+          (*mapping_).unsetEdge(a, b);
         } else {
-          mapping_.setEdge(a, b);
+          (*mapping_).setEdge(a, b);
         }
         a = b;
       }
@@ -275,19 +290,19 @@ class MappingFinder{
    *
    */
   static void
-  shrink(Graph & graph_, Graph & mapping_, const set_t & set, int v);
+  shrink(Graph * graph_, Graph * mapping_, const set_t * set, int v);
 
   /**
    * Urizni stonek kytky
    */
-  static int cut(set_t & set);
+  static int cut(set_t * set);
 
   /**
    * rozvin g.k a m.k zpet do g, m
    */
   static void
-  expand(const Graph & g_k_, Graph & m_k_, Graph & graph_, Graph & mapping_,
-         const set_t & set, int v);
+  expand(const Graph * g_k_, Graph * m_k_, Graph * graph_, Graph * mapping_,
+         const set_t * set, int v);
 
   /**
    * Jeden krok algoritmu
@@ -295,7 +310,7 @@ class MappingFinder{
    * @param m stavajici parovani, ktere mame zlepsit
    * @return true - parovani bylo zlepseno; false parovani je nejlepsi
    */
-  static bool step(Graph & g, Graph & m);
+  static bool step(Graph * g, Graph * m);
 
 #ifndef DEBUG // NOLINT
 public: // NOLINT
@@ -303,10 +318,10 @@ public: // NOLINT
   /**
    * Najdi nejlepsi parovani v grafu
    */
-  static inline Graph
-  FindMaxMapping(Graph & g) {
-    Graph m(g.getVertices(), g.getEdges());
-    while (step(g, m)) continue;
+  static inline std::unique_ptr<Graph>
+  FindMaxMapping(Graph * g) {
+    std::unique_ptr<Graph> m(new Graph((*g).getVertices(), (*g).getEdges()));
+    while (step(g, m.get())) continue;
     return m;
   }
 };  // MappingFinder

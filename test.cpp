@@ -5,6 +5,7 @@
 #define DEBUG
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "./edmonds.h"
 using nsp::Result;
 using nsp::Graph;
@@ -81,8 +82,8 @@ test0() {
 
   Graph m(6, 6);
   MappingFinder::les_t l;
-  MappingFinder::queue_t s = MappingFinder::prepare(m, l);
-  if (s.size() == 6) {
+  std::unique_ptr<MappingFinder::queue_t> s = MappingFinder::prepare(&m, &l);
+  if ((*s).size() == 6) {
     std::cout << "Velikost OK" << std::endl;
   } else {
     std::cout << "Velikost KO" << std::endl;
@@ -92,9 +93,9 @@ test0() {
 
   for (int i = 0; i < 5; ++i) {
     MappingFinder::les_t l;
-    Result r = MappingFinder::find(g, m, set, l);
+    Result r = MappingFinder::find(&g, &m, &set, &l);
     if (r == nsp::AP) {
-      MappingFinder::augment(m, set);
+      MappingFinder::augment(&m, &set);
     }
     if (!m.isMapping()) {
       std::cout << "Chybny mezivystup - nejde o parovani" << std::endl;
@@ -124,9 +125,9 @@ test1() {
   g.setEdge(3, 4);
   g.setEdge(4, 5);
 
-  Graph m = MappingFinder::FindMaxMapping(g);
+  std::unique_ptr<Graph> m = MappingFinder::FindMaxMapping(&g);
 
-  if (!m.isMapping()) {
+  if (!(*m).isMapping()) {
     std::cout << "KO - not a mapping" << std::endl;
   }
 
@@ -134,11 +135,11 @@ test1() {
   expected.setEdge(0, 1);
   expected.setEdge(2, 3);
   expected.setEdge(4, 5);
-  if (m == expected) {
+  if ((*m) == expected) {
     std::cout << "OK" << std::endl;
   } else {
     std::cout << "KO" << std::endl;
-    m.print();
+    (*m).print();
     std::cout << "Expected" << std::endl;
     expected.print();
   }
@@ -165,12 +166,12 @@ test2() {
   g.setEdge(10, 11);
   g.setEdge(11, 12);
   g.setEdge(12, 13);
-  Graph m = MappingFinder::FindMaxMapping(g);
-  if (m.isMapping() && m.getEdges() == 8) {
+  std::unique_ptr<Graph> m = MappingFinder::FindMaxMapping(&g);
+  if ((*m).isMapping() && (*m).getEdges() == 8) {
     std::cout << "OK" << std::endl;
   } else {
     std::cout << "KO" << std::endl;
-    m.print();
+    (*m).print();
   }
 }
 
@@ -189,8 +190,8 @@ test3() {
   g.setEdge(6, 8);
   g.setEdge(8, 9);
 
-  Graph m = MappingFinder::FindMaxMapping(g);
-  if (m.isMapping() && m.getEdges() == 5) {
+  std::unique_ptr<Graph> m = MappingFinder::FindMaxMapping(&g);
+  if ((*m).isMapping() && (*m).getEdges() == 5) {
     std::cout << "OK" << std::endl;
   } else {
     std::cout << "KO" << std::endl;
@@ -226,12 +227,12 @@ test4() {
   m.setEdge(9, 10);
   m.setEdge(11, 12);
   m.setEdge(13, 14);
-  Graph m0 = MappingFinder::FindMaxMapping(g);
-  if (m == m0) {
+  std::unique_ptr<Graph> m0 = MappingFinder::FindMaxMapping(&g);
+  if (m == (*m0)) {
     std::cout << "OK" << std::endl;
   } else {
     std::cout << "KO" << std::endl;
-    m0.print();
+    (*m0).print();
   }
 }
 

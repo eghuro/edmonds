@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <set>
+#include <memory>
 
 #include "./edmonds.h"
 
@@ -14,43 +15,43 @@ using nsp::MappingFinder;
 using nsp::Graph;
 
 Result
-MappingFinder::find(Graph & graph_, Graph & mapping_, set_t & set, les_t & l)
+MappingFinder::find(Graph * graph_, Graph * mapping_, set_t * set, les_t * l)
 throw(InconsistentStructureException) {
   // najdi volne vrcholy a vloz do f a do l na hladinu 0
-  queue_t f = prepare(mapping_, l);
+  std::unique_ptr<queue_t> f = prepare(mapping_, l);
 
   // hlavni cyklus - dokud fronta neni prazdna
-  queue_t::iterator i = f.begin();
-  queue_t::iterator end_it = f.end();
+  queue_t::iterator i = (*f).begin();
+  queue_t::iterator end_it = (*f).end();
   while (i < end_it) {
     int v = *i;
-    f.pop_front();
+    (*f).pop_front();
 
-    les_t::iterator x = l.find(v);
-    if (x != l.end()) {
+    les_t::iterator x = (*l).find(v);
+    if (x != (*l).end()) {
       int h = (*x).second.h;  // hladina v
 
-      Neighbours n_v = graph_.getNeighbours(v);
+      Neighbours n_v = (*graph_).getNeighbours(v);
 
       if (h%2 == 1) {
-        Neighbours m_v = mapping_.getNeighbours(v);
+        Neighbours m_v = (*mapping_).getNeighbours(v);
         int y = *(m_v.begin());  // vrchol spojeny s v parovaci hranou
-        if (l.find(y) != l.end()) {  // y in l
+        if ((*l).find(y) != (*l).end()) {  // y in l
           // y nutne na hladine h
           // najdu VSC nebo Kytku -> konec
           return finder(v, y, set, l);
         } else {  // y not in L
-          f.push_back(y);
+          (*f).push_back(y);
           edge_t e(v, y);
           WRecord wr = WRecord(y, h+1, e);
-          l.insert(pair_t(y, wr));
+          (*l).insert(pair_t(y, wr));
         }
       } else {
         std::set<int> y;
         // y mnozina vrcholu dosazitelnych z v po neparovaci hrane
         for (iter x = n_v.begin(); x < n_v.end(); x++) {
           // sousedi v
-          if (!mapping_.neighbours(v, (*x))) {
+          if (!(*mapping_).neighbours(v, (*x))) {
             // nejsou sousedi v parovani
             y.insert(*x);
           }
@@ -59,8 +60,8 @@ throw(InconsistentStructureException) {
         les_t pom;
         for (std::set<int>::iterator w = y.begin(); w != y.end(); ++w) {
           // existuje vrchol v y, ktery patri do l a je na sude hladine?
-          les_t::iterator z = l.find(*w);
-          if (z != l.end()) {
+          les_t::iterator z = (*l).find(*w);
+          if (z != (*l).end()) {
             if ((*z).second.h%2 == 0) {
               // najdu VSC nebo kytku -> konec
               return finder((*z).second.v, v, set, l);
@@ -76,33 +77,33 @@ throw(InconsistentStructureException) {
 
         // pro kazdy vrchol y nepatrici do L : zarad y do fronty
         for (les_t::iterator y = pom.begin(); y != pom.end(); ++y) {
-          f.push_back((*y).first);
-          l.insert(pair_t((*y).second.v, (*y).second));
+          (*f).push_back((*y).first);
+          (*l).insert(pair_t((*y).second.v, (*y).second));
         }
       }
     } else {  // err?
       throw InconsistentStructureException();
     }
-    i = f.begin();
-    end_it = f.end();
+    i = (*f).begin();
+    end_it = (*f).end();
   }
   return NONE;
 }
 
 int
-MappingFinder::lookup_root(int vertex, set_t & set, const les_t & l) {
+MappingFinder::lookup_root(int vertex, set_t * set, const les_t * l) {
   // hledam koren ve strome (l)
   int v = vertex;
-  les_t::const_iterator x = l.find(v);
-  if (x != l.end()) {
+  les_t::const_iterator x = (*l).find(v);
+  if (x != (*l).end()) {
     WRecord r = (*x).second;
     while (r.h != 0) {
       edge_t e = r.e;
       int buddy = (e.first == r.v) ? e.second : e.first;
-      x = l.find(buddy);
-      if (x != l.end()) {
+      x = (*l).find(buddy);
+      if (x != (*l).end()) {
         r = (*x).second;
-        set.push_back(e);
+        (*set).push_back(e);
       } else {
         return -1;
       }
@@ -113,23 +114,23 @@ MappingFinder::lookup_root(int vertex, set_t & set, const les_t & l) {
 }
 
 bool
-MappingFinder::step(Graph & g, Graph & m) {
-  set_t set;
-  les_t l;
+MappingFinder::step(Graph * g, Graph * m) {
+  std::unique_ptr<set_t> set (new set_t);
+  std::unique_ptr<les_t> l (new les_t);
   try {
-    Result x = find(g, m, set, l);
+    Result x = find(g, m, set.get(), l.get());
     // find muze hodit ISExc. ale to jen znamena bug v programu
 
     switch (x) {
       case AP:
         // zlepsi M - otocit hrany v /vne parovani -
-        augment(m, set);
+        augment(m, set.get());
         return true;
         break;
       case BLOSSOM:
         // zkontrahuj kvet
-        blossom(g, m, set, l);
-        while (find(g, m, set, l) == AP) augment(m, set);
+        blossom(g, m, set.get(), l.get());
+        while (find(g, m, set.get(), l.get()) == AP) augment(m, set.get());
         return false;
         break;
       case NONE:
@@ -145,12 +146,12 @@ MappingFinder::step(Graph & g, Graph & m) {
 }
 
 int
-MappingFinder::cut(set_t & set) {
+MappingFinder::cut(set_t * set) {
   typedef std::map<int, std::vector<int> > str_t;
   str_t mapa;
   set_t remove;
   std::set<int> stonek;
-  for (set_t::iterator it = set.begin(); it != set.end(); ++it) {
+  for (set_t::iterator it = (*set).begin(); it != (*set).end(); ++it) {
     bool duplicit = false;
     str_t::iterator a = mapa.find((*it).first);
     if (a != mapa.end()) {
@@ -194,9 +195,9 @@ MappingFinder::cut(set_t & set) {
     }
   }
 
-  set_t set2;
+  std::unique_ptr<set_t> set2 (new set_t);
   int vrchol = -1;
-  for (set_t::iterator it = set.begin(); it != set.end(); ++it) {
+  for (set_t::iterator it = (*set).begin(); it != (*set).end(); ++it) {
     bool toRemove = false;
     for (set_t::iterator jt = remove.begin(); jt != remove.end(); ++jt) {
       if (((*jt).first == (*it).first) && ((*jt).second == (*it).second)) {
@@ -205,7 +206,7 @@ MappingFinder::cut(set_t & set) {
       }
     }
     if (!toRemove) {
-      set2.push_back(edge_t((*it).first, (*it).second));
+      (*set2).push_back(edge_t((*it).first, (*it).second));
       if (stonek.find((*it).first) != stonek.end()) {
         vrchol = (*it).first;
       } else if (stonek.find((*it).second) != stonek.end()) {
@@ -213,105 +214,105 @@ MappingFinder::cut(set_t & set) {
       }
     }
   }
-  set = set2;  // copy
+  set = set2.get();  // copy unique_ptr, don't bother with deallocation
   return vrchol;
 }
 
 void
-MappingFinder::shrink(Graph & graph_, Graph & mapping_, const set_t & set,
+MappingFinder::shrink(Graph * graph_, Graph * mapping_, const set_t * set,
                       int v) {
   // zjistit, zda ex. hrana (v,v) v grafu (v parovani nebyla)
-  bool b = graph_.neighbours(v, v);
+  bool b = (*graph_).neighbours(v, v);
 
   std::set<int> pom;
   pom.insert(v);
   // hrany kvetu
-  for (set_t::const_iterator it = set.begin(); it != set.end(); ++it) {
+  for (set_t::const_iterator it = (*set).begin(); it != (*set).end(); ++it) {
     int a = (*it).first;
     int b = (*it).second;
 
     if (pom.find(a) == pom.end()) {
       pom.insert(a);
-      Neighbours n_a = graph_.getNeighbours(a);
+      Neighbours n_a = (*graph_).getNeighbours(a);
       for (iter it = n_a.begin(); it != n_a.end(); ++it) {
-        if (!graph_.neighbours(v, (*it))) {
+        if (!(*graph_).neighbours(v, (*it))) {
           if ((v != (*it)) && ((*it) != -1)) {
             int i = (*it);
-            graph_.unsetEdge(a, i);
-            graph_.setEdge(v, i);
+            (*graph_).unsetEdge(a, i);
+            (*graph_).setEdge(v, i);
           }
         }
       }
     }
     if (pom.find(b) == pom.end()) {
       pom.insert(b);
-      Neighbours n_b = graph_.getNeighbours(b);
+      Neighbours n_b = (*graph_).getNeighbours(b);
       for (iter it = n_b.begin(); it != n_b.end(); ++it) {
-        if (!graph_.neighbours(v, (*it))) {
+        if (!(*graph_).neighbours(v, (*it))) {
           if ((v != (*it)) && ((*it) != -1)) {
             int i = (*it);
-            graph_.unsetEdge(b, i);
-            mapping_.unsetEdge(b, i);
-            graph_.setEdge(v, i);
+            (*graph_).unsetEdge(b, i);
+            (*mapping_).unsetEdge(b, i);
+            (*graph_).setEdge(v, i);
           }
         }
       }
     }
   }
   for (std::set<int>::iterator it = pom.begin(); it != pom.end(); ++it) {
-    graph_.unsetEdge(v, (*it));
-    mapping_.unsetEdge(v, (*it));
+    (*graph_).unsetEdge(v, (*it));
+    (*mapping_).unsetEdge(v, (*it));
   }
-  for (set_t::const_iterator it = set.begin(); it != set.end(); it++) {
+  for (set_t::const_iterator it = (*set).begin(); it != (*set).end(); it++) {
     if (((*it).first != v) && ((*it).second != v)) {
-      graph_.unsetEdge((*it).first, (*it).second);
+      (*graph_).unsetEdge((*it).first, (*it).second);
     }
-    mapping_.unsetEdge((*it).first, (*it).second);
+    (*mapping_).unsetEdge((*it).first, (*it).second);
   }
   // pokud existovala hrana (v,v) nastavit
   if (b) {
-    graph_.setEdge(v, v);
+    (*graph_).setEdge(v, v);
   }
 }
 
 void
-MappingFinder::expand(const Graph & g_k_, Graph & m_k_, Graph & graph_,
-                      Graph & mapping_, const set_t & set, int v) {
+MappingFinder::expand(const Graph * g_k_, Graph * m_k_, Graph * graph_,
+                      Graph * mapping_, const set_t * set, int v) {
   // pokud M.K lze zlepsit - zlepsi M, konec
   std::cout << "Expand" << std::endl;
   mapping_ = m_k_;
 
   std::set<int> mn;
-  for (set_t::const_iterator it = set.begin(); it != set.end(); ++it) {
+  for (set_t::const_iterator it = (*set).begin(); it != (*set).end(); ++it) {
     mn.insert((*it).first);
     mn.insert((*it).second);
 
-    Neighbours a = mapping_.getNeighbours((*it).first);
+    Neighbours a = (*mapping_).getNeighbours((*it).first);
     for (iter yt = a.begin(); yt != a.end(); ++yt) {
-      mapping_.unsetEdge((*it).first, (*yt));
+      (*mapping_).unsetEdge((*it).first, (*yt));
     }
-    a = mapping_.getNeighbours((*it).second);
+    a = (*mapping_).getNeighbours((*it).second);
     for (iter yt = a.begin(); yt != a.end(); ++yt) {
-      mapping_.unsetEdge((*it).second, (*yt));
+      (*mapping_).unsetEdge((*it).second, (*yt));
     }
   }
 
-  Neighbours n_v = m_k_.getNeighbours(v);
+  Neighbours n_v = (*m_k_).getNeighbours(v);
   int n = -1;
   for (iter it = n_v.begin(); it != n_v.end(); ++it) {
     n = (*it);  // nejvyse 1 soused v
     break;
   }
   if (n != -1) {  // existuje
-    mapping_.setEdge(v, n);
+    (*mapping_).setEdge(v, n);
     mn.erase(v);
     for (unsigned int i = 0; i < (mn.size() / 2); ++i) {
       std::set<int>::iterator j = mn.begin();
       int a = (*j);
       ++j;
       for (; j != mn.end(); ++j) {
-        if (graph_.neighbours(a, (*j))) {
-          mapping_.setEdge(a, (*j));
+        if ((*graph_).neighbours(a, (*j))) {
+          (*mapping_).setEdge(a, (*j));
           mn.erase(a);
           mn.erase(*j);
           break;
