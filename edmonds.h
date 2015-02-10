@@ -280,7 +280,7 @@ class MappingFinder{
         } else {
           (*mapping_).setEdge(a, b);
         }
-        a = b;
+        // a = b;
       }
     }
   }

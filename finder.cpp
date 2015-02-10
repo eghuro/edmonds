@@ -188,6 +188,9 @@ MappingFinder::cut(set_t * set) {
           break;
         }
       }
+      if (!duplicit) {  // insert
+        (*a).second.push_back((*it).second);
+      }
     } else {  // novy vektor
       std::vector<int> v;
       v.push_back((*it).first);
@@ -214,7 +217,7 @@ MappingFinder::cut(set_t * set) {
       }
     }
   }
-  set = set2.get();  // copy unique_ptr, don't bother with deallocation
+  (*set) = *(set2.get());  // copy
   return vrchol;
 }
 
