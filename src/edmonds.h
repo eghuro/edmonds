@@ -1,8 +1,8 @@
 /*
  * Copyright 2015 Alexandr Mansurov
  */
-#ifndef EDMONDS_H_
-#define EDMONDS_H_
+#ifndef SRC_EDMONDS_H_
+#define SRC_EDMONDS_H_
 #include <utility>
 #include <vector>
 #include <deque>

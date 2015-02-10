@@ -49,11 +49,11 @@ throw(InconsistentStructureException) {
       } else {
         std::set<int> y;
         // y mnozina vrcholu dosazitelnych z v po neparovaci hrane
-        for (iter x = n_v.begin(); x < n_v.end(); x++) {
+        for (auto x : n_v) {
           // sousedi v
-          if (!(*mapping_).neighbours(v, (*x))) {
+          if (!(*mapping_).neighbours(v, x)) {
             // nejsou sousedi v parovani
-            y.insert(*x);
+            y.insert(x);
           }
         }
 
@@ -76,9 +76,9 @@ throw(InconsistentStructureException) {
         }
 
         // pro kazdy vrchol y nepatrici do L : zarad y do fronty
-        for (les_t::iterator y = pom.begin(); y != pom.end(); ++y) {
-          (*f).push_back((*y).first);
-          (*l).insert(pair_t((*y).second.v, (*y).second));
+        for (auto y : pom) {
+          (*f).push_back(y.first);
+          (*l).insert(pair_t(y.second.v, y.second));
         }
       }
     } else {  // err?
@@ -151,69 +151,69 @@ MappingFinder::cut(set_t * set) {
   str_t mapa;
   set_t remove;
   std::set<int> stonek;
-  for (set_t::iterator it = (*set).begin(); it != (*set).end(); ++it) {
+  for (auto it : (*set)) {
     bool duplicit = false;
-    str_t::iterator a = mapa.find((*it).first);
+    str_t::iterator a = mapa.find(it.first);
     if (a != mapa.end()) {
       // rozsiruji vektor, resp. hledam duplikat
       for (std::vector<int>::iterator jt = (*a).second.begin();
            jt != (*a).second.end(); ++jt) {
-        if ((*jt) == (*it).second) {
+        if ((*jt) == it.second) {
           // nalezen duplikat
           duplicit = true;
-          remove.push_back(edge_t((*it).first, (*it).second));
-          stonek.insert((*it).first);
-          stonek.insert((*it).second);
+          remove.push_back(edge_t(it.first, it.second));
+          stonek.insert(it.first);
+          stonek.insert(it.second);
           (*a).second.erase(jt);
           break;  // iterator ve foru neplatny
         }
       }
       if (!duplicit) {  // insert
-        (*a).second.push_back((*it).second);
+        (*a).second.push_back(it.second);
       }
     } else {
       // novy vektor
       std::vector<int> v;
-      v.push_back((*it).second);
-      mapa.insert(std::pair<int, std::vector<int> >((*it).first, v));
+      v.push_back(it.second);
+      mapa.insert(std::pair<int, std::vector<int> >(it.first, v));
     }
     duplicit = false;
-    str_t::iterator b = mapa.find((*it).second);
+    str_t::iterator b = mapa.find(it.second);
     if (b != mapa.end()) {
       for (std::vector<int>::iterator jt = (*b).second.begin();
            jt != (*b).second.end(); ++jt) {
-        if ((*jt) == (*it).first) {
+        if ((*jt) == it.first) {
           duplicit = true;
           (*b).second.erase(jt);
           break;
         }
       }
       if (!duplicit) {  // insert
-        (*b).second.push_back((*it).second);
+        (*b).second.push_back(it.second);
       }
     } else {  // novy vektor
       std::vector<int> v;
-      v.push_back((*it).first);
-      mapa.insert(std::pair<int, std::vector<int> >((*it).second, v));
+      v.push_back(it.first);
+      mapa.insert(std::pair<int, std::vector<int> >(it.second, v));
     }
   }
 
   std::unique_ptr<set_t> set2 (new set_t);
   int vrchol = -1;
-  for (set_t::iterator it = (*set).begin(); it != (*set).end(); ++it) {
+  for (auto it : (*set)) {
     bool toRemove = false;
-    for (set_t::iterator jt = remove.begin(); jt != remove.end(); ++jt) {
-      if (((*jt).first == (*it).first) && ((*jt).second == (*it).second)) {
+    for (auto jt : remove) {
+      if ((jt.first == it.first) && (jt.second == it.second)) {
         toRemove = true;
         break;
       }
     }
     if (!toRemove) {
-      (*set2).push_back(edge_t((*it).first, (*it).second));
-      if (stonek.find((*it).first) != stonek.end()) {
-        vrchol = (*it).first;
-      } else if (stonek.find((*it).second) != stonek.end()) {
-        vrchol = (*it).second;
+      (*set2).push_back(edge_t(it.first, it.second));
+      if (stonek.find(it.first) != stonek.end()) {
+        vrchol = it.first;
+      } else if (stonek.find(it.second) != stonek.end()) {
+        vrchol = it.second;
       }
     }
   }
@@ -230,17 +230,17 @@ MappingFinder::shrink(Graph * graph_, Graph * mapping_, const set_t * set,
   std::set<int> pom;
   pom.insert(v);
   // hrany kvetu
-  for (set_t::const_iterator it = (*set).begin(); it != (*set).end(); ++it) {
-    int a = (*it).first;
-    int b = (*it).second;
+  for (auto it : (*set)) {
+    int a = it.first;
+    int b = it.second;
 
     if (pom.find(a) == pom.end()) {
       pom.insert(a);
       Neighbours n_a = (*graph_).getNeighbours(a);
-      for (iter it = n_a.begin(); it != n_a.end(); ++it) {
-        if (!(*graph_).neighbours(v, (*it))) {
-          if ((v != (*it)) && ((*it) != -1)) {
-            int i = (*it);
+      for (auto jt : n_a) {
+        if (!(*graph_).neighbours(v, jt)) {
+          if ((v != jt) && (jt != -1)) {
+            int i = jt;
             (*graph_).unsetEdge(a, i);
             (*graph_).setEdge(v, i);
           }
@@ -250,10 +250,10 @@ MappingFinder::shrink(Graph * graph_, Graph * mapping_, const set_t * set,
     if (pom.find(b) == pom.end()) {
       pom.insert(b);
       Neighbours n_b = (*graph_).getNeighbours(b);
-      for (iter it = n_b.begin(); it != n_b.end(); ++it) {
-        if (!(*graph_).neighbours(v, (*it))) {
-          if ((v != (*it)) && ((*it) != -1)) {
-            int i = (*it);
+      for (auto it : n_b) {
+        if (!(*graph_).neighbours(v, it)) {
+          if ((v != it) && (it != -1)) {
+            int i = it;
             (*graph_).unsetEdge(b, i);
             (*mapping_).unsetEdge(b, i);
             (*graph_).setEdge(v, i);
@@ -262,15 +262,15 @@ MappingFinder::shrink(Graph * graph_, Graph * mapping_, const set_t * set,
       }
     }
   }
-  for (std::set<int>::iterator it = pom.begin(); it != pom.end(); ++it) {
-    (*graph_).unsetEdge(v, (*it));
-    (*mapping_).unsetEdge(v, (*it));
+  for (auto it : pom) {
+    (*graph_).unsetEdge(v, it);
+    (*mapping_).unsetEdge(v, it);
   }
-  for (set_t::const_iterator it = (*set).begin(); it != (*set).end(); it++) {
-    if (((*it).first != v) && ((*it).second != v)) {
-      (*graph_).unsetEdge((*it).first, (*it).second);
+  for (auto it : (*set)) {
+    if ((it.first != v) && (it.second != v)) {
+      (*graph_).unsetEdge(it.first, it.second);
     }
-    (*mapping_).unsetEdge((*it).first, (*it).second);
+    (*mapping_).unsetEdge(it.first, it.second);
   }
   // pokud existovala hrana (v,v) nastavit
   if (b) {
@@ -286,24 +286,24 @@ MappingFinder::expand(const Graph * g_k_, Graph * m_k_, Graph * graph_,
   mapping_ = m_k_;
 
   std::set<int> mn;
-  for (set_t::const_iterator it = (*set).begin(); it != (*set).end(); ++it) {
-    mn.insert((*it).first);
-    mn.insert((*it).second);
+  for (auto it : (*set)) {
+    mn.insert(it.first);
+    mn.insert(it.second);
 
-    Neighbours a = (*mapping_).getNeighbours((*it).first);
-    for (iter yt = a.begin(); yt != a.end(); ++yt) {
-      (*mapping_).unsetEdge((*it).first, (*yt));
+    Neighbours a = (*mapping_).getNeighbours(it.first);
+    for (auto yt : a) {
+      (*mapping_).unsetEdge(it.first, yt);
     }
-    a = (*mapping_).getNeighbours((*it).second);
-    for (iter yt = a.begin(); yt != a.end(); ++yt) {
-      (*mapping_).unsetEdge((*it).second, (*yt));
+    a = (*mapping_).getNeighbours(it.second);
+    for (auto yt : a) {
+      (*mapping_).unsetEdge(it.second, yt);
     }
   }
 
   Neighbours n_v = (*m_k_).getNeighbours(v);
   int n = -1;
-  for (iter it = n_v.begin(); it != n_v.end(); ++it) {
-    n = (*it);  // nejvyse 1 soused v
+  for (auto it : n_v) {
+    n = it;  // nejvyse 1 soused v
     break;
   }
   if (n != -1) {  // existuje
