@@ -189,7 +189,7 @@ MappingFinder::cut(set_t * set) {
         }
       }
       if (!duplicit) {  // insert
-        (*a).second.push_back((*it).second);
+        (*b).second.push_back((*it).second);
       }
     } else {  // novy vektor
       std::vector<int> v;

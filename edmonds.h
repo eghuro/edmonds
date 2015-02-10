@@ -26,25 +26,45 @@ class UnexpectedResultException : public std::exception {};
  */
 struct Neighbours {
  public:
-  Neighbours():nil(true) {  // ctor
+  /**
+   * Defaultni konstruktor struktury
+   */
+  Neighbours():nil(true) {
     std::vector<int> x;
     a = x.begin();
     b = x.end();
   }
 
+  /**
+   * Vytvori strukturu s definovanym zacatkem a koncem vyrezu
+   * @param beg iterator na zacatek
+   * @param end iterator na konec
+   */
   Neighbours(iter beg, iter end):nil(false), a(beg), b(end)  {}
 
-  Neighbours(const Neighbours& other) = default;  // copy ctor
-  // Neighbours(Neighbours&& other) noexcept = default;  // move ctor
-  ~Neighbours() noexcept = default;  // dtor
-  Neighbours& operator= (const Neighbours& other) = default;  // cpy ament otor
-  Neighbours& operator= (Neighbours&& other) = default;  // move assignment otor
-
+  /**
+   * Vrati iterator na zacatek
+   * @return iterator na zacatek
+   */
   inline iter begin() const { return a; }
+
+  /**
+   * Vrati iterator na konec
+   * @return iterator na konec
+   */
   inline iter end() const { return b; }
+
+  /**
+   * Vrati pocet prvku ve vyrezu
+   * @return pocet prvku ve vyrezu
+   */
   inline int size() const { return b-a; }
 
+  /**
+   * Prazdna?
+   */
   bool nil;
+
  private:
   iter a, b;
 };
@@ -123,11 +143,28 @@ class Graph {
    */
   bool isMapping() const;
 
-  Graph(const Graph& other) = default;  // copy ctor
-  // Graph (Graph&& other) noexcept = default;  // move ctor
-  ~Graph() noexcept = default;  // dtor
-  Graph& operator= (const Graph& other) = default;  // copy assignment otor
-  Graph& operator= (Graph&& other) = default;  // move assignment otor
+  /**
+   * Explicitne definovany default copy constructor
+   * @param other Graph ke zkopirovani
+   */
+  Graph(const Graph& other) = default;
+
+  /**
+   * Explicitne definovany default destructor
+   */
+  ~Graph() noexcept = default;
+
+  /**
+   * Explicitne definovany default copy assignment operator
+   * @param other Graph ke zkopirovani
+   */
+  Graph& operator= (const Graph& other) = default;
+
+  /**
+   * Explicitne definovany default move assignment operator
+   * @param other Graph k presunuti
+   */
+  Graph& operator= (Graph&& other) = default;
 
 #ifdef DEBUG //NOLINT
  public: //NOLINT
@@ -157,11 +194,26 @@ class Graph {
  */
 struct WRecord {
  public:
-  int v, h;
+  /** vrchol */
+  int v;
+  /** hladina */
+  int h;
+  /** hrana */
   edge_t e;
 
+  /**
+   * Konstruktor nastavi uchovavane parametry
+   * @param v_l vrchol
+   * @param h_l hladina
+   * @param e_l hrana
+   */
   WRecord(int v_l, int h_l, edge_t e_l):v(v_l), h(h_l), e(e_l) {}
 
+  /**
+   * Konstruktor nastavi uchovavane parametry
+   * @param v_l vrchol
+   * @param h_l hladina
+   */
   WRecord(int v_l, int h_l):v(v_l), h(h_l) {}
 };
 
@@ -191,6 +243,10 @@ class MappingFinder{
   /**
    * Byla nalezena kytka:
    * urizni stonek, zkontrahuj kvet, pokud M.K lze zlepsit, zlepsi M, jinak M je nejlepsi
+   * @param graph_ pointer na graf
+   * @param mapping_ pointer na parovani
+   * @param set pointer na mnozinu hran
+   * @param l pointer na les
    */
   static inline bool
   blossom(Graph * graph_, Graph * mapping_, set_t * set, const les_t * l) {
@@ -213,6 +269,9 @@ class MappingFinder{
   /**
    * najdi volne vrcholy a vloz do f a do l na hladinu 0
    * volny vrchol - neni v zadne parovaci hrane
+   * @param mapping_ pointer na tvorene parovani
+   * @param l pointer na tvoreny les
+   * @return pointer frontu vrcholu
    */
   static inline std::unique_ptr<queue_t>
   prepare(Graph * mapping_, les_t * l) {
@@ -231,6 +290,12 @@ class MappingFinder{
 
   /**
    * zkus najit VSC nebo kytku
+   * @param graph_ pointer na graf
+   * @param mapping_ pointer na tvorene parovani
+   * @param set pointer na mnozinu hran
+   * @param l pointer na les
+   * @return typ nalezu - stridava cesta (AP), kytka (BLOSSOM), nebo je parovani nejvetsi (NONE)
+   * @throws InconsistentStructureException chyby v datovych strukturach
    */
   static Result
   find(Graph * graph_, Graph * mapping_, set_t * set, les_t * l)
@@ -238,12 +303,20 @@ class MappingFinder{
 
   /**
    * Najdi koren ve strome
+   * @param vertex vrchol
+   * @param set pointer na mnozinu hran
+   * @param l pointer na les
+   * @return koren ve strome
    */
   static int
   lookup_root(int vertex, set_t * set, const les_t * l);
 
   /**
    * Najdu VSC nebo kytku
+   * @param v vrchol
+   * @param set pointer na mnozinu hran
+   * @param l pointer na les
+   * @return konstanta dle typu nalezu - BLOSSOM nebo AP
    */
   static inline Result
   finder(int v, int y, set_t * set, const les_t * l) {
@@ -266,6 +339,8 @@ class MappingFinder{
   /**
    * Zlepsi parovani podel cesty
    * jde o VSC, pro dvojice vrcholu prohazuji: hrana v/vne parovani
+   * @param mapping_ pointer na parovani
+   * @param set pointer na mnozinu hran cesty
    */
   static inline void
   augment(Graph * mapping_, set_t * set) {
@@ -287,18 +362,29 @@ class MappingFinder{
 
   /**
    * Kontrakce kvetu v set
-   *
+   * @param graph_ pointer na graf ke kontrakci
+   * @param mapping_ pointer na parovani ke kontrakci
+   * @param set pointer na mnozinu hran kytky
+   * @param v identifikator kvetu
    */
   static void
   shrink(Graph * graph_, Graph * mapping_, const set_t * set, int v);
 
   /**
    * Urizni stonek kytky
+   * @param set kytka
+   * @return vrchol kvetu
    */
   static int cut(set_t * set);
 
   /**
    * rozvin g.k a m.k zpet do g, m
+   * @param g_k_ pointer na kontrahovany graf
+   * @param m_k_ pointer na kontrahovane parovani
+   * @param graph_ pointer na dekontrahovany graf (vystupni parametr)
+   * @param mapping_ pointer na dekontrahovane parovani (vystupni parametr)
+   * @param set pointer na mnozinu hran kytky
+   * @param v identifikator kvetu
    */
   static void
   expand(const Graph * g_k_, Graph * m_k_, Graph * graph_, Graph * mapping_,
@@ -316,7 +402,9 @@ class MappingFinder{
 public: // NOLINT
 #endif
   /**
-   * Najdi nejlepsi parovani v grafu
+   * Najdi maximalni parovani v grafu
+   * @param g pointer na graf, kde hledame parovani
+   * @return pointer na kopii grafu, obsahujici pouze hrany parovani
    */
   static inline std::unique_ptr<Graph>
   FindMaxMapping(Graph * g) {
