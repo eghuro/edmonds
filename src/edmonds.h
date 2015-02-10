@@ -314,6 +314,7 @@ class MappingFinder{
   /**
    * Najdu VSC nebo kytku
    * @param v vrchol
+   * @param y vrchol spojeny s v parovaci hranou
    * @param set pointer na mnozinu hran
    * @param l pointer na les
    * @return konstanta dle typu nalezu - BLOSSOM nebo AP
