@@ -96,9 +96,9 @@ Graph::setEdge(int x, int y) {
 void
 Graph::print() const {
   std::cout << "Neighbours" << std::endl;
-  for (int i = 0; i < vertices; ++i) {
+  for (int i = 0; i < vertices; i++) {
     std::cout << "vertex " << i << ": ";
-    for (int j = 0; j < edges; ++j) {
+    for (int j = 0; j < edges; j++) {
       if (neighbours_[i][j] != -1) {
         std::cout << neighbours_[i][j] << " ";
       }

@@ -1,8 +1,8 @@
 CC=g++
-CFLAGS=-c -Wall -std=c++11
+CFLAGS=-c -Wall -std=c++11 -O2 -g -pg
 LDFLAGS=-Wall
 
-objs := graph.o finder.o test.o
+objs := graph.o finder.o dispatch.o
 prog := test
 
 .PHONY: all
