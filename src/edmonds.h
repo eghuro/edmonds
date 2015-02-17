@@ -10,9 +10,9 @@
 #include <memory>
 #include <map>
 #include <set>
-#include <algorithm>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 namespace nsp {
 typedef std::pair<int, int> edge_t;
@@ -228,12 +228,12 @@ enum Result{
  * Hledac parovani
  */
 class MappingFinder{
-#ifndef DEBUG //NOLINT
- private: //NOLINT
-#endif //NOLINT
-#ifdef DEBUG //NOLINT
- public: //NOLINT
-#endif //NOLINT
+#ifndef DEBUG  // NOLINT
+ private:  // NOLINT
+#endif  // NOLINT
+#ifdef DEBUG  // NOLINT
+ public:  // NOLINT
+#endif  // NOLINT
 
   typedef std::map<int, WRecord> les_t;
   typedef std::deque<int> queue_t;
@@ -376,7 +376,8 @@ class MappingFinder{
    * @param set kytka
    * @return vrchol kvetu
    */
-  static int cut(set_t * set);
+  static int
+  cut(set_t * set);
 
   /**
    * rozvin g.k a m.k zpet do g, m
@@ -397,11 +398,12 @@ class MappingFinder{
    * @param m stavajici parovani, ktere mame zlepsit
    * @return true - parovani bylo zlepseno; false parovani je nejlepsi
    */
-  static bool step(Graph * g, Graph * m);
+  static bool
+  step(Graph * g, Graph * m);
 
-#ifndef DEBUG // NOLINT
-public: // NOLINT
-#endif
+#ifndef DEBUG  // NOLINT
+public:  // NOLINT
+#endif  // NOLINT
   /**
    * Najdi maximalni parovani v grafu
    * @param g pointer na graf, kde hledame parovani
@@ -414,5 +416,23 @@ public: // NOLINT
     return m;
   }
 };  // MappingFinder
+
+class Dispatcher {
+ public:
+  /**
+   * Nacti data ze souboru do struktury Graph
+   * @param file soubor k nacteni
+   * @return ukazatel na vytvoreny graf, dojde-li k chybe jde o nullptr
+   */
+  static std::unique_ptr<nsp::Graph>
+  parse(const std::string & file);
+
+  /**
+   * Vypis informaci o pouziti (pri chybnem poctu parametru prikaz. radky)
+   * @param name jmeno spustitelneho souboru (nad UNIXem argv[0])
+   */
+  static void
+  usage(std::string name);
+};  // Dispatcher
 };  // namespace nsp
 #endif//EDMONDS_H_ NOLINT

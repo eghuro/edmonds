@@ -1,8 +1,6 @@
 /*
  * Copyright 2015 Alexandr Mansurov
  */
-// Edmonds.cpp : Defines the entry point for the console application.
-//
 
 #include <iostream>
 #include <fstream>
@@ -13,12 +11,24 @@
 #include "./edmonds.h"
 
 using nsp::Graph;
+using nsp::Dispatcher;
 
-void usage() {
-  std::cout << "Usage: edmonds <filename>" << std::endl;
+/**
+ * Vypise informaci o pouziti
+ * @param name jmeno spustitelneho souboru
+ */
+void
+Dispatcher::usage(std::string name) {
+  std::cout << "Usage: " << name << " <filename>" << std::endl;
 }
 
-std::unique_ptr<nsp::Graph> parse(const std::string & file) {
+/**
+ * Nacte graf ze souboru
+ * @param file soubor
+ * @return ukazatel na vytvoreny graf
+ */
+std::unique_ptr<nsp::Graph>
+Dispatcher::parse(const std::string & file) {
   std::cout << "Parsing file " << file << std::endl;
   std::ifstream f;
   f.open(file.c_str(), std::ios::in);
@@ -42,8 +52,14 @@ std::unique_ptr<nsp::Graph> parse(const std::string & file) {
     } else {
       // vytvorit graf
       std::unique_ptr<Graph> g(new Graph(vertices, edges));
+        // v pripade chyby vstupu se smaze sam
       for (int i = 0; i < edges; i++) {
+        line = "";
         getline(f, line);
+        if (line == "") {
+          std::cout << "Error: Empty line" << std::endl;
+          return nullptr;
+        }
         std::istringstream s2(line);
         s2.str(line);
         int x = -1;
@@ -59,6 +75,7 @@ std::unique_ptr<nsp::Graph> parse(const std::string & file) {
             }
           } else {
             std::cout << "Forbidden edge (" <<x<< "," << y << ")" << std::endl;
+            delete g;
             return nullptr;
           }
         } else {
@@ -73,16 +90,20 @@ std::unique_ptr<nsp::Graph> parse(const std::string & file) {
   }
 }
 
-int main(int argc, char** argv) {
+/**
+ * Entry point - nacte data, vyhleda parovani, vypise vystup
+ */
+int
+main(int argc, char** argv) {
   // nacti parametry
   if (argc <= 1) {
-    usage();
+    Dispatcher::usage(std::string(argv[0]));
     return 1;
   }
 
   // naparsuj soubor, ziskej pointer na graf
   std::string file = argv[1];
-  std::unique_ptr<nsp::Graph> g = parse(file);
+  std::unique_ptr<nsp::Graph> g = Dispatcher::parse(file);
   if (g == nullptr) {
     std::cout << "fail" << std::endl;
     return 1;

@@ -238,7 +238,7 @@ test4() {
 }
 
 int
-main(int argc, char** argv) {
+runTests() {
   std::cout << "Init" << std::endl;
   init();
   std::cout << "Test 0" << std::endl;
