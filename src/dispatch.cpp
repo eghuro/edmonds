@@ -75,7 +75,6 @@ Dispatcher::parse(const std::string & file) {
             }
           } else {
             std::cout << "Forbidden edge (" <<x<< "," << y << ")" << std::endl;
-            delete g;
             return nullptr;
           }
         } else {

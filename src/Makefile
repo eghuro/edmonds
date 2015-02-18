@@ -7,9 +7,6 @@ prog := test
 
 .PHONY: all
 
-clean:
-	rm -f ${objs} ${prog}
-
 all: $(prog)
 
 ${prog}: $(objs)
@@ -20,5 +17,6 @@ ${prog}: $(objs)
 
 ${objs} : edmonds.h
 
-
+clean:
+	rm -f ${objs} ${prog}
 
